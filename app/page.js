@@ -410,9 +410,14 @@ export default function App() {
 
   // ── SIMPAN SETTING ──
   async function simpanSetting(vals) {
-    for (const [k, v] of Object.entries(vals)) await saveCfg(k, v)
-    setCfg(prev => ({ ...prev, ...Object.fromEntries(Object.entries(vals).map(([k, v]) => [k, isNaN(v) ? v : +v])) }))
-    notify('Pengaturan disimpan!')
+    try {
+      for (const [k, v] of Object.entries(vals)) await saveCfg(k, v)
+      setCfg(prev => ({ ...prev, ...Object.fromEntries(Object.entries(vals).map(([k, v]) => [k, isNaN(v) ? v : +v])) }))
+      setLocalCfg(null)
+      notify('Pengaturan disimpan!')
+    } catch(err) {
+      notify('Gagal simpan: ' + err.message, true)
+    }
   }
 
   // ── MONTHLY DATA ──
