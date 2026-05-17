@@ -413,7 +413,6 @@ export default function App() {
     try {
       for (const [k, v] of Object.entries(vals)) await saveCfg(k, v)
       setCfg(prev => ({ ...prev, ...Object.fromEntries(Object.entries(vals).map(([k, v]) => [k, isNaN(v) ? v : +v])) }))
-      setLocalCfg(null)
       notify('Pengaturan disimpan!')
     } catch(err) {
       notify('Gagal simpan: ' + err.message, true)
