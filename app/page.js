@@ -105,6 +105,7 @@ export default function App() {
   const [loading,     setLoading]     = useState(true)
   const [hf,          setHf]          = useState('all')
   const [ef,          setEf]          = useState('all')
+  const [localCfg,    setLocalCfg]    = useState(null)
 
   const txRef = useRef(1000)
   const exRef = useRef(1)
@@ -991,7 +992,8 @@ export default function App() {
   }
 
   const renderSetting = () => {
-    const [localCfg, setLocalCfg] = useState({ ...cfg })
+    const lc = localCfg || cfg
+    const setLc = (fn) => setLocalCfg(prev => fn(prev || cfg))
     return (
       <>
         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Pengaturan</div>
@@ -999,20 +1001,20 @@ export default function App() {
         <div style={S.card}>
           <div style={S.sec}>Informasi BUMDes</div>
           {[['Nama BUMDes','nama_bumdes','text'],['Desa','desa','text'],['Kecamatan','kecamatan','text'],['Kabupaten','kabupaten','text']].map(([l, k, t]) => (
-            <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} type={t} value={localCfg[k] || ''} onChange={e => setLocalCfg(p => ({ ...p, [k]: e.target.value }))} /></div>
+            <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} type={t} value={lc[k] || ''} onChange={e => setLc(p => ({ ...p, [k]: e.target.value }))} /></div>
           ))}
         </div>
         <div style={S.card}>
           <div style={S.sec}>Keuangan & kas</div>
           <label style={{ ...S.lbl, marginTop: 0 }}>Set saldo kas (Rp)</label>
-          <input style={S.inp} type="number" value={Math.round(localCfg.kas || 0)} onChange={e => setLocalCfg(p => ({ ...p, kas: e.target.value }))} />
+          <input style={S.inp} type="number" value={Math.round(lc.kas || 0)} onChange={e => setLc(p => ({ ...p, kas: e.target.value }))} />
           <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 4 }}>Saldo saat ini: <strong>{rp(cfg.kas)}</strong></div>
         </div>
         <div style={S.card}>
           <div style={S.sec}>Populasi & stok pakan</div>
           <div style={S.g2}>
             {[['Populasi A (ekor)','pop_a'],['Populasi B (ekor)','pop_b'],['Stok Pakan A (kg)','pakan_a'],['Stok Pakan B (kg)','pakan_b']].map(([l, k]) => (
-              <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} type="number" value={localCfg[k] || 0} onChange={e => setLocalCfg(p => ({ ...p, [k]: e.target.value }))} /></div>
+              <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} type="number" value={lc[k] || 0} onChange={e => setLc(p => ({ ...p, [k]: e.target.value }))} /></div>
             ))}
           </div>
         </div>
@@ -1043,7 +1045,7 @@ export default function App() {
             <button style={{ ...S.btnGrn, marginTop: 0 }} onClick={addUser}>👤 Tambah pengguna</button>
           </div>
         </div>
-        <button style={S.btnGrn} onClick={() => simpanSetting(localCfg)}>💾 Simpan semua pengaturan</button>
+        <button style={S.btnGrn} onClick={() => simpanSetting(lc)}>💾 Simpan semua pengaturan</button>
       </>
     )
   }
