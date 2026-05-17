@@ -991,30 +991,64 @@ export default function App() {
     )
   }
 
-  const renderSetting = () => {
-    const lc = localCfg || cfg
-    const setLc = (fn) => setLocalCfg(prev => fn(prev || cfg))
+  const SettingPage = () => {
+    const [sv, setSv] = useState({
+      nama_bumdes: cfg.nama_bumdes || '',
+      desa: cfg.desa || '',
+      kecamatan: cfg.kecamatan || '',
+      kabupaten: cfg.kabupaten || '',
+      kas: Math.round(cfg.kas || 0),
+      pop_a: cfg.pop_a || 500,
+      pop_b: cfg.pop_b || 362,
+      pakan_a: cfg.pakan_a || 200,
+      pakan_b: cfg.pakan_b || 150,
+    })
+    const [saving, setSaving] = useState(false)
+
+    async function handleSimpan() {
+      setSaving(true)
+      try {
+        for (const [k, v] of Object.entries(sv)) {
+          await saveCfg(k, v)
+        }
+        setCfg(prev => ({ ...prev, ...sv,
+          kas: +sv.kas, pop_a: +sv.pop_a, pop_b: +sv.pop_b,
+          pakan_a: +sv.pakan_a, pakan_b: +sv.pakan_b,
+        }))
+        alert('Pengaturan berhasil disimpan!')
+      } catch(err) {
+        alert('Gagal simpan: ' + err.message)
+      }
+      setSaving(false)
+    }
+
     return (
       <>
         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Pengaturan</div>
-        <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 8 }}>Konfigurasi sistem {cfg.nama_bumdes}</div>
+        <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 8 }}>Konfigurasi sistem BUMDes</div>
         <div style={S.card}>
           <div style={S.sec}>Informasi BUMDes</div>
           {[['Nama BUMDes','nama_bumdes','text'],['Desa','desa','text'],['Kecamatan','kecamatan','text'],['Kabupaten','kabupaten','text']].map(([l, k, t]) => (
-            <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} type={t} value={lc[k] || ''} onChange={e => setLc(p => ({ ...p, [k]: e.target.value }))} /></div>
+            <div key={k}>
+              <label style={S.lbl}>{l}</label>
+              <input style={S.inp} type={t||'text'} value={sv[k]||''} onChange={e => setSv(p => ({ ...p, [k]: e.target.value }))} />
+            </div>
           ))}
         </div>
         <div style={S.card}>
           <div style={S.sec}>Keuangan & kas</div>
           <label style={{ ...S.lbl, marginTop: 0 }}>Set saldo kas (Rp)</label>
-          <input style={S.inp} type="number" value={Math.round(lc.kas || 0)} onChange={e => setLc(p => ({ ...p, kas: e.target.value }))} />
+          <input style={S.inp} type="number" value={sv.kas} onChange={e => setSv(p => ({ ...p, kas: e.target.value }))} />
           <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 4 }}>Saldo saat ini: <strong>{rp(cfg.kas)}</strong></div>
         </div>
         <div style={S.card}>
           <div style={S.sec}>Populasi & stok pakan</div>
           <div style={S.g2}>
             {[['Populasi A (ekor)','pop_a'],['Populasi B (ekor)','pop_b'],['Stok Pakan A (kg)','pakan_a'],['Stok Pakan B (kg)','pakan_b']].map(([l, k]) => (
-              <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} type="number" value={lc[k] || 0} onChange={e => setLc(p => ({ ...p, [k]: e.target.value }))} /></div>
+              <div key={k}>
+                <label style={S.lbl}>{l}</label>
+                <input style={S.inp} type="number" value={sv[k]||0} onChange={e => setSv(p => ({ ...p, [k]: e.target.value }))} />
+              </div>
             ))}
           </div>
         </div>
@@ -1028,14 +1062,16 @@ export default function App() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ background: ROLES[u.role]?.bg, color: ROLES[u.role]?.c, borderRadius: 4, padding: '2px 7px', fontSize: 9, fontWeight: 600 }}>{ROLES[u.role]?.label}</span>
-                {u.id !== user.id ? <button onClick={() => delUser(u.id)} style={{ background: '#fff1f2', color: '#dc2626', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 10, cursor: 'pointer' }}>Hapus</button> : <span style={{ fontSize: 10, color: '#9ca3af' }}>Anda</span>}
+                {u.id !== user.id
+                  ? <button onClick={() => delUser(u.id)} style={{ background: '#fff1f2', color: '#dc2626', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 10, cursor: 'pointer' }}>Hapus</button>
+                  : <span style={{ fontSize: 10, color: '#9ca3af' }}>Anda</span>}
               </div>
             </div>
           ))}
           <div style={{ marginTop: 10 }}>
             <div style={{ ...S.sec, marginBottom: 6 }}>Tambah pengguna baru</div>
             {[['Nama lengkap','nama','text'],['Username','username','text'],['Password','password','password']].map(([l, f, t]) => (
-              <div key={f}><label style={S.lbl}>{l}</label><input style={{ ...S.inp, marginBottom: 4 }} type={t} placeholder={l} value={nu[f] || ''} onChange={e => setNu(p => ({ ...p, [f]: e.target.value }))} /></div>
+              <div key={f}><label style={S.lbl}>{l}</label><input style={{ ...S.inp, marginBottom: 4 }} type={t} placeholder={l} value={nu[f]||''} onChange={e => setNu(p => ({ ...p, [f]: e.target.value }))} /></div>
             ))}
             <label style={S.lbl}>Role</label>
             <select style={{ ...S.sel, marginBottom: 8 }} value={nu.role} onChange={e => setNu(p => ({ ...p, role: e.target.value }))}>
@@ -1045,10 +1081,14 @@ export default function App() {
             <button style={{ ...S.btnGrn, marginTop: 0 }} onClick={addUser}>👤 Tambah pengguna</button>
           </div>
         </div>
-        <button style={S.btnGrn} onClick={() => simpanSetting(lc)}>💾 Simpan semua pengaturan</button>
+        <button style={{ ...S.btnGrn, opacity: saving ? 0.7 : 1 }} onClick={handleSimpan} disabled={saving}>
+          {saving ? '⏳ Menyimpan...' : '💾 Simpan semua pengaturan'}
+        </button>
       </>
     )
   }
+
+  const renderSetting = () => <SettingPage />
 
   // ─── RECEIPT MODAL ──────────────────────────────────────────────────────────
   const ReceiptModal = () => {
