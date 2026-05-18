@@ -1173,8 +1173,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
   const renderLaporan = () => {
     const rows = monthlyRows()
     const tot = rows.reduce((a, r) => ({ kg: a.kg + r.kg, btr: a.btr + r.btr, inc: a.inc + r.inc, exp: a.exp + r.exp, mati: a.mati + r.mati, pkA: a.pkA + r.pkA, pkB: a.pkB + r.pkB }), { kg: 0, btr: 0, inc: 0, exp: 0, mati: 0, pkA: 0, pkB: 0 })
-    const ec = ecByCat()
-    const lb = laba()
+    const ecMap = ecByCat()
+    const labaBersih = totalIncome - totalExpense
     return (
       <>
         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Laporan pertanggungjawaban</div>
@@ -1231,8 +1231,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
               {KATS.map((k, i) => (
                 <tr key={k.id} style={{ background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>
                   <td style={{ padding: '5px 6px' }}>{k.ic} {k.label}</td>
-                  <td style={{ padding: '5px 6px', color: k.c, fontWeight: 600 }}>{ec[k.id] ? rp(ec[k.id]) : '-'}</td>
-                  <td style={{ padding: '5px 6px' }}>{totalExpense > 0 ? f1((ec[k.id] || 0) / totalExpense * 100) + '%' : '0%'}</td>
+                  <td style={{ padding: '5px 6px', color: k.c, fontWeight: 600 }}>{ecMap[k.id] ? rp(ecMap[k.id]) : '-'}</td>
+                  <td style={{ padding: '5px 6px' }}>{totalExpense > 0 ? f1((ecMap[k.id] || 0) / totalExpense * 100) + '%' : '0%'}</td>
                 </tr>
               ))}
               <tr style={{ background: '#f3f4f6', borderTop: '2px solid #15803d' }}>
@@ -1248,7 +1248,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
         <div style={S.card}>
           <div style={S.sec}>Alokasi SHU tahunan</div>
           <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 8 }}>
-            Dari laba bersih: <strong style={{ color: lb >= 0 ? '#15803d' : '#dc2626' }}>{rp(lb)}</strong>
+            Dari laba bersih: <strong style={{ color: labaBersih >= 0 ? '#15803d' : '#dc2626' }}>{rp(labaBersih)}</strong>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
             <thead><tr>{['Item SHU','%','Nominal (Rp)'].map(h => <th key={h} style={{ background: '#15803d', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: 600 }}>{h}</th>)}</tr></thead>
@@ -1262,13 +1262,13 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
                     </div>
                   </td>
                   <td style={{ padding: '5px 6px' }}>{x.p}%</td>
-                  <td style={{ padding: '5px 6px', fontWeight: 600, color: x.c }}>{rp(lb * x.p / 100)}</td>
+                  <td style={{ padding: '5px 6px', fontWeight: 600, color: x.c }}>{rp(labaBersih * x.p / 100)}</td>
                 </tr>
               ))}
               <tr style={{ background: '#f3f4f6', borderTop: '2px solid #15803d' }}>
                 <td style={{ padding: '5px 6px', fontWeight: 600 }}>TOTAL</td>
                 <td style={{ padding: '5px 6px', fontWeight: 600 }}>100%</td>
-                <td style={{ padding: '5px 6px', fontWeight: 600, color: '#15803d' }}>{rp(lb)}</td>
+                <td style={{ padding: '5px 6px', fontWeight: 600, color: '#15803d' }}>{rp(labaBersih)}</td>
               </tr>
             </tbody>
           </table>
