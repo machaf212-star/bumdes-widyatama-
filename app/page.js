@@ -1519,6 +1519,25 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
 
   const renderSetting = () => <SettingPage />
 
+  // ── EXPORT CSV ──
+  function exportCSV() {
+    const rows = monthlyRows()
+    let csv = 'Bulan,Prod(kg),Prod(butir),Pendapatan(Rp),Pengeluaran(Rp),Laba Bersih(Rp),HDP A(%),HDP B(%),Pakan A(kg),Pakan B(kg),Kematian\n'
+    rows.forEach((r, i) => {
+      const hA = r.hAn > 0 ? f1(r.hA / r.hAn) : '-'
+      const hB = r.hBn > 0 ? f1(r.hB / r.hBn) : '-'
+      const lb = r.inc - r.exp
+      csv += `${BULAN[i]},${f1(r.kg)},${r.btr},${Math.round(r.inc)},${Math.round(r.exp)},${Math.round(lb)},${hA},${hB},${f1(r.pkA)},${f1(r.pkB)},${r.mati}\n`
+    })
+    const t = rows.reduce((a,r) => ({kg:a.kg+r.kg,btr:a.btr+r.btr,inc:a.inc+r.inc,exp:a.exp+r.exp,mati:a.mati+r.mati}),{kg:0,btr:0,inc:0,exp:0,mati:0})
+    csv += `TOTAL,${f1(t.kg)},${t.btr},${Math.round(t.inc)},${Math.round(t.exp)},${Math.round(t.inc-t.exp)},-,-,-,-,${t.mati}\n`
+    const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'})
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href=url; a.download='Laporan_BUMDes_2026.csv'
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url)
+    alert('CSV berhasil diunduh!')
+  }
+
   // ─── REKAP KAMAR POPUP ──────────────────────────────────────────────────────
   const RekapPopup = () => {
     if (!rekapPopup) return null
