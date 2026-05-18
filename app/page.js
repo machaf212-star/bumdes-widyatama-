@@ -343,7 +343,7 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
     const rows = monthlyRows()
     const tot = rows.reduce((a,r) => ({kg:a.kg+r.kg,btr:a.btr+r.btr,inc:a.inc+r.inc,exp:a.exp+r.exp,mati:a.mati+r.mati}),{kg:0,btr:0,inc:0,exp:0,mati:0})
     const ec = ecByCat()
-    const lb = laba()
+    const lb = totalIncome - totalExpense
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>Laporan ${cfg.nama_bumdes} 2026</title>
 <style>
@@ -358,8 +358,11 @@ td{padding:4px 5px;border-bottom:0.5px solid #e5e7eb}
 tr:nth-child(even) td{background:#f9fafb}
 .tot td{background:#f3f4f6;font-weight:700;border-top:1.5px solid #15803d}
 .ttl{display:flex;justify-content:space-between;align-items:center}
-@media print{body{padding:5mm}}
+@media print{body{padding:5mm}.no-print{display:none}}
 </style></head><body>
+<div class="no-print" style="background:#15803d;color:#fff;padding:10px;text-align:center;margin-bottom:12px;border-radius:6px;cursor:pointer" onclick="window.print()">
+  🖨 Klik di sini untuk Print / Simpan sebagai PDF
+</div>
 <div class="ttl"><div>
 <h1>${cfg.nama_bumdes}</h1>
 <div class="sub">${cfg.desa}, ${cfg.kecamatan}, ${cfg.kabupaten}</div>
@@ -383,7 +386,7 @@ ${KATS.map((k,i) => `<tr><td>${k.label}</td><td>${ec[k.id]?Math.round(ec[k.id]).
 <tr class="tot"><td>TOTAL</td><td>${Math.round(totalExpense).toLocaleString('id-ID')}</td><td>100%</td></tr>
 </tbody></table>
 
-<h2>Alokasi SHU dari Laba Bersih (${rp(lb)})</h2>
+<h2>Alokasi SHU dari Laba Bersih</h2>
 <table><thead><tr><th>Item SHU</th><th>%</th><th>Nominal (Rp)</th></tr></thead><tbody>
 ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).toLocaleString('id-ID')}</td></tr>`).join('')}
 <tr class="tot"><td>TOTAL</td><td>100%</td><td>${Math.round(lb).toLocaleString('id-ID')}</td></tr>
@@ -392,18 +395,25 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
 <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
 <div style="text-align:center">
 <div style="margin-bottom:40px">Mengetahui,</div>
-<div style="border-top:1px solid #000;padding-top:4px">Kepala Desa</div>
+<div style="border-top:1px solid #000;padding-top:4px">Kepala Desa ${cfg.desa}</div>
 </div>
 <div style="text-align:center">
 <div style="margin-bottom:40px">Dibuat oleh,</div>
 <div style="border-top:1px solid #000;padding-top:4px">Direktur ${cfg.nama_bumdes}</div>
 </div>
 </div>
-<script>window.onload=()=>window.print()</script>
 </body></html>`
-    const w = window.open('','_blank','width=900,height=700')
-    w.document.write(html)
-    w.document.close()
+    // Gunakan blob URL agar kompatibel di semua browser & mobile
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.target = '_blank'
+    a.rel = 'noopener'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 3000)
   }
 
   // ── LOGIN ──
@@ -1287,6 +1297,27 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
       ...elog.map(e => ({ ...e, type: 'keluar' })),
     ].sort((a, b) => b.id - a.id)
     const logs = hf === 'all' ? all : all.filter(l => l.type === hf)
+    const panenLogs = hlog.slice().sort((a,b) => new Date(a.tgl2)-new Date(b.tgl2))
+
+    // Hitung rekap per kamar dari semua panen
+    const maxRA = 250, maxRB = 181
+    const kamRecapA = new Array(maxRA).fill(null).map(() => ({0:0,1:0,2:0,3:0,mati:0,total:0}))
+    const kamRecapB = new Array(maxRB).fill(null).map(() => ({0:0,1:0,2:0,3:0,mati:0,total:0}))
+    hlog.forEach(h => {
+      if (!Array.isArray(h.roomDetail)) return
+      const recap = h.kd === 'A' ? kamRecapA : kamRecapB
+      h.roomDetail.forEach((v, i) => {
+        if (i >= recap.length || v === null || v === undefined) return
+        recap[i].total++
+        if (v === 'mati') recap[i].mati++
+        else if (typeof v === 'number') recap[i][v] = (recap[i][v]||0) + 1
+      })
+    })
+
+    // Chart data — produksi per hari (max 30 hari terakhir)
+    const chartData = panenLogs.slice(-30)
+    const maxBtr = Math.max(...chartData.map(h => h.tb), 1)
+
     return (
       <>
         <div style={{ display: 'flex', gap: 3, marginBottom: 8, background: '#f9fafb', padding: 3, borderRadius: 8 }}>
@@ -1294,6 +1325,139 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
             <button key={k} onClick={() => setHf(k)} style={{ flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', fontWeight: 600, fontSize: 12, cursor: 'pointer', background: hf === k ? '#15803d' : 'transparent', color: hf === k ? '#fff' : '#6b7280', fontFamily: 'inherit' }}>{v}</button>
           ))}
         </div>
+
+        {/* ── REKAP PRODUKSI — hanya tampil saat filter Panen ── */}
+        {hf === 'panen' && hlog.length > 0 && (
+          <>
+            {/* 1. Tabel harian */}
+            <div style={{ ...S.card, overflowX: 'auto' }}>
+              <div style={S.sec}>📋 Tabel produksi harian</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, minWidth: 360 }}>
+                <thead><tr>
+                  {['Tanggal','Kand','Butir','Kg','HDP%','Pakan(kg)','Rusak','Mati'].map(h => (
+                    <th key={h} style={{ background: '#15803d', color: '#fff', padding: '4px 5px', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {hlog.map((h, i) => (
+                    <tr key={h.id} style={{ background: i%2===0?'#fff':'#f9fafb' }}>
+                      <td style={{ padding: '4px 5px', whiteSpace: 'nowrap' }}>{h.tgl}</td>
+                      <td style={{ padding: '4px 5px' }}>
+                        <span style={{ background: h.kd==='A'?'#dcfce7':'#dbeafe', color: h.kd==='A'?'#166534':'#1e40af', borderRadius: 3, padding: '1px 5px', fontSize: 9, fontWeight: 600 }}>{h.kd}</span>
+                      </td>
+                      <td style={{ padding: '4px 5px', fontWeight: 600 }}>{h.tb}</td>
+                      <td style={{ padding: '4px 5px' }}>{f1(h.kg)}</td>
+                      <td style={{ padding: '4px 5px', color: h.hdp>=78?'#15803d':'#dc2626', fontWeight: 600 }}>{f1(h.hdp)}%</td>
+                      <td style={{ padding: '4px 5px', color: '#d97706' }}>{f1((h.pakanA||0)+(h.pakanB||0))}</td>
+                      <td style={{ padding: '4px 5px', color: (h.rusak||0)>0?'#d97706':'#9ca3af' }}>{h.rusak||0}</td>
+                      <td style={{ padding: '4px 5px', color: (h.km||0)>0?'#dc2626':'#9ca3af' }}>{h.km||0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 2. Chart produksi per hari */}
+            {chartData.length > 0 && (
+              <div style={S.card}>
+                <div style={S.sec}>📈 Grafik produksi harian (30 panen terakhir)</div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 80, overflowX: 'auto', paddingBottom: 4 }}>
+                  {chartData.map((h, i) => {
+                    const pct = h.tb / maxBtr
+                    const col = h.kd === 'A' ? '#15803d' : '#0284c7'
+                    return (
+                      <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 18, flex: '0 0 auto' }}>
+                        <div style={{ fontSize: 7, color: '#9ca3af', marginBottom: 1 }}>{h.tb}</div>
+                        <div style={{ width: 14, height: Math.max(4, pct * 60), background: col, borderRadius: '2px 2px 0 0' }} title={`${h.tgl}: ${h.tb} butir`} />
+                        <div style={{ fontSize: 6, color: '#9ca3af', marginTop: 1, transform: 'rotate(-45deg)', transformOrigin: 'top left', width: 20 }}>
+                          {h.tgl.split(' ')[0]}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 16, fontSize: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, background: '#15803d', borderRadius: 2 }} /> Kandang A</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, background: '#0284c7', borderRadius: 2 }} /> Kandang B</div>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Rekap per kamar */}
+            {hlog.some(h => Array.isArray(h.roomDetail)) && (
+              <div style={S.card}>
+                <div style={S.sec}>🏠 Rekap produksi per kamar</div>
+                <div style={{ display: 'flex', gap: 3, marginBottom: 8, background: '#f9fafb', padding: 3, borderRadius: 8 }}>
+                  {['A', 'B'].map(k => (
+                    <button key={k} onClick={() => setKd(k)}
+                      style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', fontWeight: 600, fontSize: 11, cursor: 'pointer', background: kd === k ? (k==='A'?'#15803d':'#0284c7') : 'transparent', color: kd === k ? '#fff' : '#6b7280', fontFamily: 'inherit' }}>
+                      Kandang {k}
+                    </button>
+                  ))}
+                </div>
+                {(() => {
+                  const recap = kd === 'A' ? kamRecapA : kamRecapB
+                  const maxR = kd === 'A' ? maxRA : maxRB
+                  const col = kd === 'A' ? '#15803d' : '#0284c7'
+                  // Kamar problematis: sering 0 butir atau tidak terisi
+                  const sorted0 = recap.map((r,i) => ({i, pct0: r.total>0?r[0]/r.total:0, tot: r.total})).filter(x=>x.tot>0).sort((a,b)=>b.pct0-a.pct0).slice(0,5)
+                  const sorted2 = recap.map((r,i) => ({i, pct2: r.total>0?r[2]/r.total:0, tot: r.total})).filter(x=>x.tot>0).sort((a,b)=>b.pct2-a.pct2).slice(0,5)
+                  return (
+                    <>
+                      {/* Grid mini semua kamar */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10,1fr)', gap: 2, marginBottom: 10 }}>
+                        {Array(maxR).fill(0).map((_,i) => {
+                          const r = recap[i]
+                          const best = r.total > 0 ? (r[2]>r[1]&&r[2]>r[0] ? 2 : r[1]>r[0] ? 1 : 0) : -1
+                          const bg = best===2?'#dcfce7':best===1?'#dbeafe':best===0?'#f9fafb':'#f3f4f6'
+                          const fc = best===2?'#166534':best===1?'#1d4ed8':best===0?'#6b7280':'#d1d5db'
+                          return (
+                            <div key={i} style={{ background: bg, borderRadius: 3, padding: '2px 1px', textAlign: 'center', border: `1px solid ${fc}33` }} title={`K-${i+1}: 0=${r[0]} 1=${r[1]} 2=${r[2]} 3=${r[3]}`}>
+                              <div style={{ fontSize: 7, color: '#9ca3af' }}>{i+1}</div>
+                              <div style={{ fontSize: 9, fontWeight: 700, color: fc }}>{best>=0?best:'—'}</div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* Warna legend */}
+                      <div style={{ display: 'flex', gap: 8, fontSize: 9, color: '#6b7280', marginBottom: 10, flexWrap: 'wrap' }}>
+                        {[['#dcfce7','#166534','Dominan 2 butir'],['#dbeafe','#1d4ed8','Dominan 1 butir'],['#f9fafb','#6b7280','Dominan 0 butir']].map(([bg,c,l]) => (
+                          <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <div style={{ width: 10, height: 10, background: bg, border: `1px solid ${c}33`, borderRadius: 2 }} />{l}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Top 5 kamar terbaik & perlu perhatian */}
+                      <div style={S.g2}>
+                        <div>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: '#15803d', marginBottom: 5 }}>🏆 Top 5 terbaik (dominan 2 butir)</div>
+                          {sorted2.map(x => (
+                            <div key={x.i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, padding: '3px 0', borderBottom: '0.5px solid #f3f4f6' }}>
+                              <span>K-{x.i+1}</span>
+                              <span style={{ color: '#15803d', fontWeight: 600 }}>{Math.round(x.pct2*100)}% 2-butir</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: '#dc2626', marginBottom: 5 }}>⚠ Perlu perhatian (sering 0)</div>
+                          {sorted0.map(x => (
+                            <div key={x.i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, padding: '3px 0', borderBottom: '0.5px solid #f3f4f6' }}>
+                              <span>K-{x.i+1}</span>
+                              <span style={{ color: '#dc2626', fontWeight: 600 }}>{Math.round(x.pct0*100)}% kosong</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )
+                })()}
+              </div>
+            )}
+          </>
+        )}
+        {/* ── END REKAP ── */}
         {logs.length === 0 ? <div style={{ ...S.card, textAlign: 'center', padding: 20, color: '#9ca3af', fontSize: 12 }}>Belum ada riwayat</div> :
           logs.map(log => {
             if (log.type === 'panen') return (
