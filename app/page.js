@@ -86,11 +86,12 @@ export default function App() {
   })
 
   // ── DATA LOGS ──
-  const [users,   setUsers]   = useState([])
-  const [hlog,    setHlog]    = useState([])   // panen
-  const [slog,    setSlog]    = useState([])   // penjualan
-  const [elog,    setElog]    = useState([])   // pengeluaran
-  const [piutang, setPiutang] = useState([])
+  const [users,     setUsers]     = useState([])
+  const [hlog,      setHlog]      = useState([])
+  const [slog,      setSlog]      = useState([])
+  const [elog,      setElog]      = useState([])
+  const [piutang,   setPiutang]   = useState([])
+  const [pelanggan, setPelanggan] = useState([])  // daftar pelanggan langganan
 
   // ── FORM DRAFTS ──
   const [hd, setHd] = useState({ kg: '', km: '', rusak: '', pakanAPagi: '', pakanASore: '', pakanBPagi: '', pakanBSore: '' })
@@ -187,6 +188,10 @@ export default function App() {
         })))
         if (keluarData.length > 0) exRef.current = 1 + keluarData.length
       }
+
+      // Pelanggan langganan
+      const { data: plgData } = await supabase.from('pelanggan').select('*').order('nama')
+      if (plgData) setPelanggan(plgData)
     } catch (err) {
       notify('Gagal memuat data. Cek koneksi internet.', true)
     }
@@ -196,6 +201,140 @@ export default function App() {
   // ── UPDATE CONFIG KE SUPABASE ──
   async function saveCfg(key, value) {
     await supabase.from('config').upsert({ key, value: String(value) }, { onConflict: 'key' })
+  }
+
+  // ── SIMPAN PELANGGAN ──
+  async function simpanPelanggan(nama, alamat, hp) {
+    if (!nama.trim()) return
+    const exists = pelanggan.find(p => p.nama.toLowerCase() === nama.toLowerCase())
+    if (exists) return // sudah ada
+    try {
+      const { data, error } = await supabase.from('pelanggan').insert({ nama, alamat, hp }).select().single()
+      if (error) throw error
+      setPelanggan(prev => [...prev, data].sort((a,b) => a.nama.localeCompare(b.nama)))
+    } catch(e) { console.error(e) }
+  }
+
+  async function hapusPelanggan(id) {
+    await supabase.from('pelanggan').delete().eq('id', id)
+    setPelanggan(prev => prev.filter(p => p.id !== id))
+  }
+
+  // ── STRUK PENJUALAN — PRINT & WA ──
+  function printStruk(tx) {
+    const pm = PAY_METHODS.find(p => p.id === tx.metode)
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Struk ${tx.no}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',monospace;font-size:11px;width:58mm;padding:4mm}
+.c{text-align:center}.b{font-weight:bold}.lg{font-size:13px}
+hr{border:none;border-top:1px dashed #000;margin:4px 0}
+.row{display:flex;justify-content:space-between}
+.tot{font-size:14px;font-weight:bold}
+</style></head><body>
+<div class="c b lg">${cfg.nama_bumdes}</div>
+<div class="c">${cfg.desa}, ${cfg.kecamatan}</div>
+<div class="c">${cfg.kabupaten}</div>
+<div class="c">Telur Ayam Petelur Segar</div>
+<hr>
+<div class="row"><span>No. Transaksi</span><span>${tx.no}</span></div>
+<div class="row"><span>Tanggal</span><span>${tx.tgl}</span></div>
+<div class="row"><span>Kasir</span><span>${tx.by}</span></div>
+<div class="row"><span>Pelanggan</span><span>${tx.nama}</span></div>
+${tx.alamat ? `<div class="row"><span>Alamat</span><span>${tx.alamat}</span></div>` : ''}
+${tx.hp ? `<div class="row"><span>No. HP</span><span>${tx.hp}</span></div>` : ''}
+<div class="row"><span>Metode</span><span>${pm ? pm.label : tx.metode}</span></div>
+${tx.metode==='transfer' ? `<div class="row"><span>Bank</span><span>${tx.bank} (${tx.norek})</span></div>` : ''}
+${tx.metode==='tempo' ? `<div class="row"><span>Jatuh Tempo</span><span>${tx.tempo}</span></div>` : ''}
+<hr>
+<div class="row"><span>Telur Ayam</span><span>${tx.kg} kg x ${rp(tx.harga)}</span></div>
+<hr>
+<div class="row tot"><span>TOTAL</span><span>${rp(tx.total)}</span></div>
+<hr>
+${tx.metode==='tempo' ? '<div class="c" style="color:red">STATUS: BELUM LUNAS</div><hr>' : ''}
+<br>
+<div class="c">Tanda Tangan Kasir</div>
+<br><br><br>
+<div class="c">___________________</div>
+<div class="c">${tx.by}</div>
+<br>
+<div class="c">Terima kasih!</div>
+<script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}</script>
+</body></html>`
+    const w = window.open('','_blank','width=400,height=600')
+    w.document.write(html)
+    w.document.close()
+  }
+
+  function kirimWAStruk(tx) {
+    const pm = PAY_METHODS.find(p => p.id === tx.metode)
+    const teks = `*${cfg.nama_bumdes}*\n${cfg.desa}, ${cfg.kecamatan}, ${cfg.kabupaten}\n\n` +
+      `📋 *STRUK PENJUALAN*\n` +
+      `No. : ${tx.no}\nTgl : ${tx.tgl}\nKasir: ${tx.by}\n\n` +
+      `👤 *Pelanggan*\nNama : ${tx.nama}\nAlamat: ${tx.alamat||'-'}\nHP : ${tx.hp||'-'}\n\n` +
+      `🥚 Telur Ayam ${tx.kg} kg x ${rp(tx.harga)}\n` +
+      `━━━━━━━━━━━━━━━━━━\n` +
+      `💰 *TOTAL: ${rp(tx.total)}*\n` +
+      `Metode: ${pm ? pm.label : tx.metode}` +
+      (tx.metode==='tempo' ? `\nJatuh Tempo: ${tx.tempo}\n⚠️ STATUS: BELUM LUNAS` : '') +
+      `\n\nTerima kasih atas kepercayaan Anda! 🙏`
+    const hp = tx.hp ? tx.hp.replace(/[^0-9]/g,'').replace(/^0/,'62') : ''
+    const url = `https://wa.me/${hp}?text=${encodeURIComponent(teks)}`
+    window.open(url, '_blank')
+  }
+
+  // ── KWITANSI PENGELUARAN — PRINT & WA ──
+  function printKwitansi(exp) {
+    const ki = katOf(exp.kat)
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Kwitansi ${exp.no}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',monospace;font-size:11px;width:58mm;padding:4mm}
+.c{text-align:center}.b{font-weight:bold}.lg{font-size:13px}
+hr{border:none;border-top:1px dashed #000;margin:4px 0}
+.row{display:flex;justify-content:space-between}
+.tot{font-size:14px;font-weight:bold}
+</style></head><body>
+<div class="c b lg">${cfg.nama_bumdes}</div>
+<div class="c">${cfg.desa}, ${cfg.kecamatan}</div>
+<hr>
+<div class="c b">KWITANSI PENGELUARAN</div>
+<hr>
+<div class="row"><span>No.</span><span>${exp.no}</span></div>
+<div class="row"><span>Tanggal</span><span>${exp.tgl}</span></div>
+<div class="row"><span>Kategori</span><span>${ki.ic} ${ki.label}</span></div>
+<div class="row"><span>Keterangan</span><span>${exp.ket}</span></div>
+${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kand.${exp.kdPakan})</span></div>` : ''}
+<div class="row"><span>Dicatat oleh</span><span>${exp.by}</span></div>
+<hr>
+<div class="row tot"><span>JUMLAH</span><span>${rp(exp.jml)}</span></div>
+<hr>
+<br>
+<div class="c">Tanda Tangan</div>
+<br><br><br>
+<div class="c">___________________</div>
+<div class="c">${exp.by}</div>
+<script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}</script>
+</body></html>`
+    const w = window.open('','_blank','width=400,height=600')
+    w.document.write(html)
+    w.document.close()
+  }
+
+  function kirimWAKwitansi(exp) {
+    const ki = katOf(exp.kat)
+    const teks = `*${cfg.nama_bumdes}*\n${cfg.desa}, ${cfg.kecamatan}\n\n` +
+      `🧾 *KWITANSI PENGELUARAN*\n` +
+      `No. : ${exp.no}\nTgl : ${exp.tgl}\n` +
+      `Kategori: ${ki.ic} ${ki.label}\n` +
+      `Keterangan: ${exp.ket}\n` +
+      (exp.qty > 0 ? `Qty Pakan: ${exp.qty} kg (Kandang ${exp.kdPakan})\n` : '') +
+      `━━━━━━━━━━━━━━━━━━\n` +
+      `💸 *JUMLAH: ${rp(exp.jml)}*\n\n` +
+      `Dicatat oleh: ${exp.by}`
+    window.open(`https://wa.me/?text=${encodeURIComponent(teks)}`, '_blank')
   }
 
   // ── LOGIN ──
@@ -797,9 +936,32 @@ export default function App() {
           )}
 
           <div style={S.sec}>Data pelanggan</div>
+
+          {/* Pilih pelanggan langganan */}
+          {pelanggan.length > 0 && (
+            <div style={{ marginBottom: 8 }}>
+              <label style={{ ...S.lbl, marginTop: 0 }}>Pilih Pelanggan Langganan</label>
+              <select style={S.sel} onChange={e => {
+                const p = pelanggan.find(x => x.id === e.target.value)
+                if (p) setTd(prev => ({ ...prev, nama: p.nama, alamat: p.alamat||'', hp: p.hp||'' }))
+              }} defaultValue="">
+                <option value="">-- Ketik baru atau pilih dari daftar --</option>
+                {pelanggan.map(p => <option key={p.id} value={p.id}>{p.nama} {p.hp ? `(${p.hp})` : ''}</option>)}
+              </select>
+            </div>
+          )}
+
           {[['Nama pelanggan *', 'nama', 'text', 'Nama lengkap'], ['Alamat', 'alamat', 'text', 'Alamat'], ['No. HP', 'hp', 'tel', '08xx']].map(([l, f, t, ph]) => (
             <div key={f}><label style={{ ...S.lbl, marginTop: 0 }}>{l}</label><input style={{ ...S.inp, marginBottom: 6 }} type={t} placeholder={ph} value={td[f] || ''} onChange={e => setTd(p => ({ ...p, [f]: e.target.value }))} /></div>
           ))}
+
+          {/* Simpan ke daftar pelanggan */}
+          {td.nama && !pelanggan.find(p => p.nama.toLowerCase() === td.nama.toLowerCase()) && (
+            <button onClick={() => { simpanPelanggan(td.nama, td.alamat, td.hp); alert(`${td.nama} disimpan ke daftar pelanggan!`) }}
+              style={{ ...S.btnSm, background: '#eff6ff', color: '#1d4ed8', border: '0.5px solid #bfdbfe', marginBottom: 8 }}>
+              💾 Simpan ke daftar pelanggan
+            </button>
+          )}
 
           <div style={S.sec}>Detail transaksi</div>
           <div style={S.g2}>
@@ -823,6 +985,27 @@ export default function App() {
           </div>
         )}
 
+        {/* Daftar pelanggan langganan */}
+        {pelanggan.length > 0 && (
+          <div style={S.card}>
+            <div style={S.sec}>Daftar Pelanggan Langganan ({pelanggan.length})</div>
+            {pelanggan.map(p => (
+              <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '0.5px solid #f3f4f6' }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600 }}>{p.nama}</div>
+                  <div style={{ fontSize: 10, color: '#6b7280' }}>{p.hp||'-'} {p.alamat ? `· ${p.alamat}` : ''}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button onClick={() => setTd(prev => ({ ...prev, nama: p.nama, alamat: p.alamat||'', hp: p.hp||'' }))}
+                    style={{ ...S.btnSm, background: '#f0fdf4', color: '#15803d', border: '0.5px solid #bbf7d0' }}>Pilih</button>
+                  <button onClick={() => hapusPelanggan(p.id)}
+                    style={{ ...S.btnSm, background: '#fff1f2', color: '#dc2626', border: '0.5px solid #fecaca' }}>Hapus</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {slog.length > 0 && (
           <div style={S.card}>
             <div style={S.sec}>Riwayat penjualan</div>
@@ -840,7 +1023,11 @@ export default function App() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontWeight: 600, fontSize: 12, color: '#15803d' }}>{rp(t.total)}</div>
-                    <button onClick={() => setReceipt(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0284c7', cursor: 'pointer' }}>Struk</button>
+                    <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', marginTop: 3 }}>
+                      <button onClick={() => setReceipt(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0284c7', cursor: 'pointer' }}>Struk</button>
+                      <button onClick={() => printStruk(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#15803d', cursor: 'pointer' }}>🖨 Print</button>
+                      <button onClick={() => kirimWAStruk(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#16a34a', cursor: 'pointer' }}>💬 WA</button>
+                    </div>
                   </div>
                 </div>
               )
@@ -919,7 +1106,13 @@ export default function App() {
                     <div style={{ fontSize: 10, color: '#9ca3af' }}>{e.tgl} · {e.ket}{e.qty > 0 ? ` · +${e.qty}kg Kand.${e.kdPakan}` : ''}</div>
                   </div>
                 </div>
-                <div style={{ fontWeight: 600, fontSize: 12, color: '#dc2626' }}>{rp(e.jml)}</div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 600, fontSize: 12, color: '#dc2626' }}>{rp(e.jml)}</div>
+                  <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', marginTop: 2 }}>
+                    <button onClick={() => printKwitansi(e)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#15803d', cursor: 'pointer' }}>🖨 Print</button>
+                    <button onClick={() => kirimWAKwitansi(e)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#16a34a', cursor: 'pointer' }}>💬 WA</button>
+                  </div>
+                </div>
               </div>
             )
           })}
@@ -1214,6 +1407,12 @@ export default function App() {
             <div style={{ textAlign: 'center', fontSize: 10, color: '#9ca3af', marginTop: 3 }}>{receipt.by} — {cfg.nama_bumdes}</div>
           </div>
           <div style={{ textAlign: 'center', fontSize: 10, color: '#9ca3af', marginBottom: 10 }}>Terima kasih atas kepercayaan Anda!</div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+            <button onClick={() => printStruk(receipt)}
+              style={{ flex: 1, background: '#f0fdf4', color: '#15803d', border: '0.5px solid #bbf7d0', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>🖨 Print Termal</button>
+            <button onClick={() => kirimWAStruk(receipt)}
+              style={{ flex: 1, background: '#f0fdf4', color: '#16a34a', border: '0.5px solid #bbf7d0', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>💬 Kirim WA</button>
+          </div>
           <button style={S.btnGrn} onClick={() => setReceipt(null)}>Tutup Struk</button>
         </div>
       </div>
