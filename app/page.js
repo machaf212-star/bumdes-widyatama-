@@ -410,13 +410,9 @@ export default function App() {
 
   // ── SIMPAN SETTING ──
   async function simpanSetting(vals) {
-    try {
-      for (const [k, v] of Object.entries(vals)) await saveCfg(k, v)
-      setCfg(prev => ({ ...prev, ...Object.fromEntries(Object.entries(vals).map(([k, v]) => [k, isNaN(v) ? v : +v])) }))
-      notify('Pengaturan disimpan!')
-    } catch(err) {
-      notify('Gagal simpan: ' + err.message, true)
-    }
+    for (const [k, v] of Object.entries(vals)) await saveCfg(k, v)
+    setCfg(prev => ({ ...prev, ...Object.fromEntries(Object.entries(vals).map(([k, v]) => [k, isNaN(v) ? v : +v])) }))
+    notify('Pengaturan disimpan!')
   }
 
   // ── MONTHLY DATA ──
@@ -1006,6 +1002,7 @@ export default function App() {
       pop_b: cfg.pop_b || 362,
       pakan_a: cfg.pakan_a || 200,
       pakan_b: cfg.pakan_b || 150,
+      stok_kg: cfg.stok_kg || 0,       // ← TAMBAHAN stok telur
     })
     const [saving, setSaving] = useState(false)
 
@@ -1018,6 +1015,7 @@ export default function App() {
         setCfg(prev => ({ ...prev, ...sv,
           kas: +sv.kas, pop_a: +sv.pop_a, pop_b: +sv.pop_b,
           pakan_a: +sv.pakan_a, pakan_b: +sv.pakan_b,
+          stok_kg: +sv.stok_kg,         // ← update stok telur di state
         }))
         alert('Pengaturan berhasil disimpan!')
       } catch(err) {
@@ -1045,6 +1043,22 @@ export default function App() {
           <input style={S.inp} type="number" value={sv.kas} onChange={e => setSv(p => ({ ...p, kas: e.target.value }))} />
           <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 4 }}>Saldo saat ini: <strong>{rp(cfg.kas)}</strong></div>
         </div>
+
+        <div style={S.card}>
+          <div style={S.sec}>Stok Telur</div>
+          <label style={{ ...S.lbl, marginTop: 0 }}>Stok Telur Saat Ini (kg)</label>
+          <input style={S.inp} type="number" placeholder="0" value={sv.stok_kg}
+            onChange={e => setSv(p => ({ ...p, stok_kg: e.target.value }))} />
+          <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 4 }}>
+            Isi jika ada stok telur yang belum terjual sebelum aplikasi digunakan.
+            Nilai ini akan otomatis <strong>bertambah</strong> setiap kali input panen disimpan.
+          </div>
+          <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '7px 10px', marginTop: 8, fontSize: 11 }}>
+            <div style={{ fontWeight: 600, color: '#15803d' }}>Stok telur di dashboard saat ini:</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#15803d' }}>{f1(cfg.stok_kg)} kg</div>
+          </div>
+        </div>
+
         <div style={S.card}>
           <div style={S.sec}>Populasi & stok pakan</div>
           <div style={S.g2}>
