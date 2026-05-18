@@ -985,27 +985,6 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
           </div>
         )}
 
-        {/* Daftar pelanggan langganan */}
-        {pelanggan.length > 0 && (
-          <div style={S.card}>
-            <div style={S.sec}>Daftar Pelanggan Langganan ({pelanggan.length})</div>
-            {pelanggan.map(p => (
-              <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '0.5px solid #f3f4f6' }}>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600 }}>{p.nama}</div>
-                  <div style={{ fontSize: 10, color: '#6b7280' }}>{p.hp||'-'} {p.alamat ? `· ${p.alamat}` : ''}</div>
-                </div>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button onClick={() => setTd(prev => ({ ...prev, nama: p.nama, alamat: p.alamat||'', hp: p.hp||'' }))}
-                    style={{ ...S.btnSm, background: '#f0fdf4', color: '#15803d', border: '0.5px solid #bbf7d0' }}>Pilih</button>
-                  <button onClick={() => hapusPelanggan(p.id)}
-                    style={{ ...S.btnSm, background: '#fff1f2', color: '#dc2626', border: '0.5px solid #fecaca' }}>Hapus</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
         {slog.length > 0 && (
           <div style={S.card}>
             <div style={S.sec}>Riwayat penjualan</div>
@@ -1367,6 +1346,47 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
             <button style={{ ...S.btnGrn, marginTop: 0 }} onClick={addUser}>👤 Tambah pengguna</button>
           </div>
         </div>
+        <div style={S.card}>
+          <div style={S.sec}>Daftar Pelanggan Langganan ({pelanggan.length})</div>
+          <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 8 }}>Kelola di sini, pilih di menu Kasir saat transaksi</div>
+
+          {/* Form tambah pelanggan */}
+          {(() => {
+            const [np, setNp] = useState({ nama: '', alamat: '', hp: '' })
+            return (
+              <>
+                {[['Nama *','nama','text','Nama toko/pelanggan'],['Alamat','alamat','text','Alamat'],['No. HP','hp','tel','08xx']].map(([l,f,t,ph]) => (
+                  <div key={f}><label style={S.lbl}>{l}</label><input style={S.inp} type={t} placeholder={ph} value={np[f]||''} onChange={e => setNp(p => ({ ...p, [f]: e.target.value }))} /></div>
+                ))}
+                <button style={{ ...S.btnGrn, marginTop: 8, background: '#1d4ed8' }} onClick={() => {
+                  if (!np.nama.trim()) { alert('Nama wajib diisi!'); return }
+                  simpanPelanggan(np.nama, np.alamat, np.hp)
+                  setNp({ nama: '', alamat: '', hp: '' })
+                  alert(`${np.nama} berhasil ditambahkan!`)
+                }}>➕ Tambah Pelanggan</button>
+              </>
+            )
+          })()}
+
+          {/* Daftar pelanggan */}
+          {pelanggan.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Daftar tersimpan:</div>
+              {pelanggan.map(p => (
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '0.5px solid #f3f4f6' }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600 }}>{p.nama}</div>
+                    <div style={{ fontSize: 10, color: '#6b7280' }}>{p.hp||'-'}{p.alamat ? ` · ${p.alamat}` : ''}</div>
+                  </div>
+                  <button onClick={() => { if(window.confirm(`Hapus ${p.nama}?`)) hapusPelanggan(p.id) }}
+                    style={{ ...S.btnSm, background: '#fff1f2', color: '#dc2626', border: '0.5px solid #fecaca' }}>Hapus</button>
+                </div>
+              ))}
+            </div>
+          )}
+          {pelanggan.length === 0 && <div style={{ textAlign: 'center', padding: '12px 0', fontSize: 11, color: '#9ca3af' }}>Belum ada pelanggan tersimpan</div>}
+        </div>
+
         <button style={{ ...S.btnGrn, opacity: saving ? 0.7 : 1 }} onClick={handleSimpan} disabled={saving}>
           {saving ? '⏳ Menyimpan...' : '💾 Simpan semua pengaturan'}
         </button>
