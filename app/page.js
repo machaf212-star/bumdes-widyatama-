@@ -107,6 +107,7 @@ export default function App() {
   const [hf,          setHf]          = useState('all')
   const [ef,          setEf]          = useState('all')
   const [localCfg,    setLocalCfg]    = useState(null)
+  const [rekapPopup,  setRekapPopup]  = useState(null)  // {log} untuk popup rekap kamar
 
   const txRef = useRef(1000)
   const exRef = useRef(1)
@@ -335,6 +336,74 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
       `💸 *JUMLAH: ${rp(exp.jml)}*\n\n` +
       `Dicatat oleh: ${exp.by}`
     window.open(`https://wa.me/?text=${encodeURIComponent(teks)}`, '_blank')
+  }
+
+  // ── PRINT LAPORAN ──
+  function printLaporan() {
+    const rows = monthlyRows()
+    const tot = rows.reduce((a,r) => ({kg:a.kg+r.kg,btr:a.btr+r.btr,inc:a.inc+r.inc,exp:a.exp+r.exp,mati:a.mati+r.mati}),{kg:0,btr:0,inc:0,exp:0,mati:0})
+    const ec = ecByCat()
+    const lb = laba()
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Laporan ${cfg.nama_bumdes} 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:10px;padding:15px;color:#111}
+h1{font-size:14px;color:#15803d;margin-bottom:2px}
+h2{font-size:12px;margin:10px 0 4px;color:#15803d}
+.sub{font-size:9px;color:#6b7280;margin-bottom:8px}
+table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:9px}
+th{background:#15803d;color:#fff;padding:4px 5px;text-align:left;white-space:nowrap}
+td{padding:4px 5px;border-bottom:0.5px solid #e5e7eb}
+tr:nth-child(even) td{background:#f9fafb}
+.tot td{background:#f3f4f6;font-weight:700;border-top:1.5px solid #15803d}
+.ttl{display:flex;justify-content:space-between;align-items:center}
+@media print{body{padding:5mm}}
+</style></head><body>
+<div class="ttl"><div>
+<h1>${cfg.nama_bumdes}</h1>
+<div class="sub">${cfg.desa}, ${cfg.kecamatan}, ${cfg.kabupaten}</div>
+<div class="sub">Laporan Pertanggungjawaban Tahun 2026</div>
+</div><div style="text-align:right;font-size:9px;color:#6b7280">Dicetak: ${new Date().toLocaleString('id-ID')}</div></div>
+
+<h2>Ringkasan Per Bulan</h2>
+<table><thead><tr>
+<th>Bulan</th><th>Prod(kg)</th><th>Butir</th><th>Pendapatan(Rp)</th><th>Pengeluaran(Rp)</th><th>Laba(Rp)</th><th>Pakan A(kg)</th><th>Pakan B(kg)</th><th>HDP A</th><th>HDP B</th><th>Kematian</th>
+</tr></thead><tbody>
+${rows.map((r,i) => {
+  const hA=r.hAn>0?f1(r.hA/r.hAn):'-',hB=r.hBn>0?f1(r.hB/r.hBn):'-',lb2=r.inc-r.exp
+  return `<tr><td>${BULAN[i]}</td><td>${f1(r.kg)}</td><td>${r.btr}</td><td>${Math.round(r.inc).toLocaleString('id-ID')}</td><td>${Math.round(r.exp).toLocaleString('id-ID')}</td><td style="color:${lb2>=0?'#15803d':'#dc2626'}">${Math.round(lb2).toLocaleString('id-ID')}</td><td>${f1(r.pkA)}</td><td>${f1(r.pkB)}</td><td style="color:${parseFloat(hA)>=78?'#15803d':'#dc2626'}">${hA}</td><td style="color:${parseFloat(hB)>=78?'#15803d':'#dc2626'}">${hB}</td><td>${r.mati}</td></tr>`
+}).join('')}
+<tr class="tot"><td>TOTAL</td><td>${f1(tot.kg)}</td><td>${tot.btr}</td><td>${Math.round(tot.inc).toLocaleString('id-ID')}</td><td>${Math.round(tot.exp).toLocaleString('id-ID')}</td><td>${Math.round(tot.inc-tot.exp).toLocaleString('id-ID')}</td><td>—</td><td>—</td><td>—</td><td>—</td><td>${tot.mati}</td></tr>
+</tbody></table>
+
+<h2>Rincian Pengeluaran Per Kategori</h2>
+<table><thead><tr><th>Kategori</th><th>Nominal (Rp)</th><th>% dari Total</th></tr></thead><tbody>
+${KATS.map((k,i) => `<tr><td>${k.label}</td><td>${ec[k.id]?Math.round(ec[k.id]).toLocaleString('id-ID'):'-'}</td><td>${totalExpense>0?f1((ec[k.id]||0)/totalExpense*100)+'%':'0%'}</td></tr>`).join('')}
+<tr class="tot"><td>TOTAL</td><td>${Math.round(totalExpense).toLocaleString('id-ID')}</td><td>100%</td></tr>
+</tbody></table>
+
+<h2>Alokasi SHU dari Laba Bersih (${rp(lb)})</h2>
+<table><thead><tr><th>Item SHU</th><th>%</th><th>Nominal (Rp)</th></tr></thead><tbody>
+${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).toLocaleString('id-ID')}</td></tr>`).join('')}
+<tr class="tot"><td>TOTAL</td><td>100%</td><td>${Math.round(lb).toLocaleString('id-ID')}</td></tr>
+</tbody></table>
+
+<div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+<div style="text-align:center">
+<div style="margin-bottom:40px">Mengetahui,</div>
+<div style="border-top:1px solid #000;padding-top:4px">Kepala Desa</div>
+</div>
+<div style="text-align:center">
+<div style="margin-bottom:40px">Dibuat oleh,</div>
+<div style="border-top:1px solid #000;padding-top:4px">Direktur ${cfg.nama_bumdes}</div>
+</div>
+</div>
+<script>window.onload=()=>window.print()</script>
+</body></html>`
+    const w = window.open('','_blank','width=900,height=700')
+    w.document.write(html)
+    w.document.close()
   }
 
   // ── LOGIN ──
@@ -721,17 +790,19 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
         </div>
       )}
 
-      <div style={S.card}>
-        <div style={S.sec}>Alokasi SHU tahunan</div>
-        <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 7 }}>Dari laba bersih <strong style={{ color: '#111' }}>{rp(laba)}</strong></div>
-        {SHU.map(x => (
-          <div key={x.l} style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-            <div style={{ width: 8, height: 8, borderRadius: 2, background: x.c, flexShrink: 0 }} />
-            <div style={{ flex: 1, fontSize: 11 }}>{x.l}</div>
-            <span style={{ fontSize: 10, color: '#9ca3af' }}>{x.p}%</span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: x.c, minWidth: 80, textAlign: 'right' }}>{rp(laba * x.p / 100)}</span>
+      <div style={{ ...S.card, background: '#f0fdf4', border: '0.5px solid #bbf7d0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#15803d' }}>📋 Alokasi SHU & Laporan Lengkap</div>
+            <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>Laba bersih: <strong style={{ color: '#15803d' }}>{rp(laba)}</strong></div>
           </div>
-        ))}
+          {canDo('laporan') && (
+            <button onClick={() => go('laporan')}
+              style={{ background: '#15803d', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+              Lihat →
+            </button>
+          )}
+        </div>
       </div>
     </>
   )
@@ -1102,10 +1173,25 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
   const renderLaporan = () => {
     const rows = monthlyRows()
     const tot = rows.reduce((a, r) => ({ kg: a.kg + r.kg, btr: a.btr + r.btr, inc: a.inc + r.inc, exp: a.exp + r.exp, mati: a.mati + r.mati, pkA: a.pkA + r.pkA, pkB: a.pkB + r.pkB }), { kg: 0, btr: 0, inc: 0, exp: 0, mati: 0, pkA: 0, pkB: 0 })
+    const ec = ecByCat()
+    const lb = laba()
     return (
       <>
         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Laporan pertanggungjawaban</div>
         <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 8 }}>Ringkasan tahunan {cfg.nama_bumdes} — 2026</div>
+
+        {/* Tombol Print & Export */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <button onClick={printLaporan}
+            style={{ flex: 1, background: '#15803d', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            🖨 Print / PDF
+          </button>
+          <button onClick={exportCSV}
+            style={{ flex: 1, background: '#fff', color: '#15803d', border: '0.5px solid #15803d', borderRadius: 8, padding: '10px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            📥 Export CSV
+          </button>
+        </div>
+
         <div style={{ ...S.card, padding: '10px 8px', overflowX: 'auto' }}>
           <div style={S.sec}>Ringkasan per bulan</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, minWidth: 480 }}>
@@ -1157,6 +1243,39 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
             </tbody>
           </table>
         </div>
+
+        {/* SHU pindah ke Laporan */}
+        <div style={S.card}>
+          <div style={S.sec}>Alokasi SHU tahunan</div>
+          <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 8 }}>
+            Dari laba bersih: <strong style={{ color: lb >= 0 ? '#15803d' : '#dc2626' }}>{rp(lb)}</strong>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+            <thead><tr>{['Item SHU','%','Nominal (Rp)'].map(h => <th key={h} style={{ background: '#15803d', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: 600 }}>{h}</th>)}</tr></thead>
+            <tbody>
+              {SHU.map((x, i) => (
+                <tr key={x.l} style={{ background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                  <td style={{ padding: '5px 6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: x.c, flexShrink: 0 }} />
+                      {x.l}
+                    </div>
+                  </td>
+                  <td style={{ padding: '5px 6px' }}>{x.p}%</td>
+                  <td style={{ padding: '5px 6px', fontWeight: 600, color: x.c }}>{rp(lb * x.p / 100)}</td>
+                </tr>
+              ))}
+              <tr style={{ background: '#f3f4f6', borderTop: '2px solid #15803d' }}>
+                <td style={{ padding: '5px 6px', fontWeight: 600 }}>TOTAL</td>
+                <td style={{ padding: '5px 6px', fontWeight: 600 }}>100%</td>
+                <td style={{ padding: '5px 6px', fontWeight: 600, color: '#15803d' }}>{rp(lb)}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '8px 10px', marginTop: 8, fontSize: 10, color: '#6b7280' }}>
+            Distribusi SHU berdasarkan AD/ART BUMDes Widyatama
+          </div>
+        </div>
       </>
     )
   }
@@ -1187,9 +1306,18 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
                     <div style={{ fontSize: 10, color: log.hdp >= 78 ? '#15803d' : '#dc2626' }}>HDP {f1(log.hdp)}%</div>
                     {(log.pakanA || 0) > 0 || (log.pakanB || 0) > 0 ? <div style={{ fontSize: 10, color: '#d97706' }}>🌾 Pakan A:{f1(log.pakanA || 0)}kg B:{f1(log.pakanB || 0)}kg</div> : null}
                     {log.km > 0 && <div style={{ fontSize: 10, color: '#dc2626' }}>Kematian: {log.km} ekor</div>}
+                    {(log.rusak || 0) > 0 && <div style={{ fontSize: 10, color: '#d97706' }}>Telur rusak: {log.rusak} butir</div>}
                     <div style={{ fontSize: 10, color: '#9ca3af' }}>{log.by}</div>
                   </div>
-                  <div style={{ fontSize: 10, color: '#9ca3af' }}>{log.tgl}</div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 4 }}>{log.tgl}</div>
+                    {log.roomDetail && (
+                      <button onClick={() => setRekapPopup(log)}
+                        style={{ background: '#f0fdf4', border: '0.5px solid #bbf7d0', borderRadius: 6, padding: '4px 8px', fontSize: 9, fontWeight: 600, color: '#15803d', cursor: 'pointer' }}>
+                        📊 Rekap Kamar
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )
@@ -1396,7 +1524,77 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
 
   const renderSetting = () => <SettingPage />
 
-  // ─── RECEIPT MODAL ──────────────────────────────────────────────────────────
+  // ─── REKAP KAMAR POPUP ──────────────────────────────────────────────────────
+  const RekapPopup = () => {
+    if (!rekapPopup) return null
+    const log = rekapPopup
+    const rooms = Array.isArray(log.roomDetail) ? log.roomDetail : []
+    const maxR = log.kd === 'A' ? 250 : 181
+
+    // Hitung statistik per nilai
+    const cnt = { 0: 0, 1: 0, 2: 0, 3: 0, mati: 0, kosong: 0 }
+    rooms.forEach(v => {
+      if (v === 'mati') cnt.mati++
+      else if (v === null || v === undefined) cnt.kosong++
+      else cnt[v] = (cnt[v] || 0) + 1
+    })
+
+    const colMap = { 0: '#6b7280', 1: '#0284c7', 2: '#15803d', 3: '#d97706', mati: '#dc2626' }
+
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 60, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '10px', overflowY: 'auto' }}>
+        <div style={{ background: '#fff', borderRadius: 14, padding: 16, width: '100%', maxWidth: 420, marginTop: 8 }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>📊 Rekap Kamar — Kandang {log.kd}</div>
+              <div style={{ fontSize: 10, color: '#6b7280' }}>{log.tgl} · {log.tb} butir · HDP {f1(log.hdp)}%</div>
+            </div>
+            <button onClick={() => setRekapPopup(null)} style={{ background: '#f3f4f6', border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+          </div>
+
+          {/* Ringkasan */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5, marginBottom: 10 }}>
+            {[['0 butir', cnt[0], '#f9fafb', '#6b7280'], ['1 butir', cnt[1], '#dbeafe', '#1d4ed8'], ['2 butir', cnt[2], '#dcfce7', '#166534'], ['3 butir', cnt[3], '#fef3c7', '#92400e'], ['Mati/Ksg', (cnt.mati + cnt.kosong), '#fff1f2', '#dc2626']].map(([l, v, bg, c]) => (
+              <div key={l} style={{ background: bg, borderRadius: 7, padding: '6px 4px', textAlign: 'center' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: c }}>{v}</div>
+                <div style={{ fontSize: 8, color: '#6b7280' }}>{l}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Grid kamar */}
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Detail per kamar:</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 3, maxHeight: 320, overflowY: 'auto' }}>
+            {Array(maxR).fill(0).map((_, i) => {
+              const v = rooms[i]
+              const isMati = v === 'mati'
+              const isNull = v === null || v === undefined
+              const bg = isMati ? '#fff1f2' : isNull ? '#f9fafb' : v === 0 ? '#f9fafb' : v === 1 ? '#dbeafe' : v === 2 ? '#dcfce7' : '#fef3c7'
+              const fc = isMati ? '#dc2626' : isNull ? '#d1d5db' : colMap[v] || '#374151'
+              return (
+                <div key={i} style={{ background: bg, borderRadius: 5, padding: '4px 2px', textAlign: 'center', border: `1px solid ${fc}22` }}>
+                  <div style={{ fontSize: 8, color: '#9ca3af' }}>K{i+1}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: fc }}>{isMati ? '✕' : isNull ? '—' : v}</div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Legend */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+            {[['—', '#d1d5db', 'Tidak diisi'], ['0', '#6b7280', '0 butir'], ['1', '#0284c7', '1 butir'], ['2', '#15803d', '2 butir'], ['3', '#d97706', '3 butir'], ['✕', '#dc2626', 'Mati']].map(([sym, c, l]) => (
+              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9, color: '#6b7280' }}>
+                <span style={{ fontWeight: 700, color: c }}>{sym}</span> {l}
+              </div>
+            ))}
+          </div>
+
+          <button onClick={() => setRekapPopup(null)} style={{ ...S.btnGrn, marginTop: 10 }}>Tutup</button>
+        </div>
+      </div>
+    )
+  }
   const ReceiptModal = () => {
     if (!receipt) return null
     const pm = PAY_METHODS.find(p => p.id === receipt.metode)
@@ -1443,6 +1641,7 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
   return (
     <div style={S.wrap}>
       {notif && <div style={notif(notif.err)}>{notif.msg}</div>}
+      <RekapPopup />
       <ReceiptModal />
 
       <div style={S.topbar}>
