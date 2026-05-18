@@ -1377,9 +1377,10 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
       pop_b: cfg.pop_b || 362,
       pakan_a: cfg.pakan_a || 200,
       pakan_b: cfg.pakan_b || 150,
-      stok_kg: cfg.stok_kg || 0,       // ← TAMBAHAN stok telur
+      stok_kg: cfg.stok_kg || 0,
     })
     const [saving, setSaving] = useState(false)
+    const [np, setNp] = useState({ nama: '', alamat: '', hp: '' })
 
     async function handleSimpan() {
       setSaving(true)
@@ -1479,22 +1480,16 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
           <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 8 }}>Kelola di sini, pilih di menu Kasir saat transaksi</div>
 
           {/* Form tambah pelanggan */}
-          {(() => {
-            const [np, setNp] = useState({ nama: '', alamat: '', hp: '' })
-            return (
-              <>
-                {[['Nama *','nama','text','Nama toko/pelanggan'],['Alamat','alamat','text','Alamat'],['No. HP','hp','tel','08xx']].map(([l,f,t,ph]) => (
-                  <div key={f}><label style={S.lbl}>{l}</label><input style={S.inp} type={t} placeholder={ph} value={np[f]||''} onChange={e => setNp(p => ({ ...p, [f]: e.target.value }))} /></div>
-                ))}
-                <button style={{ ...S.btnGrn, marginTop: 8, background: '#1d4ed8' }} onClick={() => {
-                  if (!np.nama.trim()) { alert('Nama wajib diisi!'); return }
-                  simpanPelanggan(np.nama, np.alamat, np.hp)
-                  setNp({ nama: '', alamat: '', hp: '' })
-                  alert(`${np.nama} berhasil ditambahkan!`)
-                }}>➕ Tambah Pelanggan</button>
-              </>
-            )
-          })()}
+          {[['Nama *','nama','text','Nama toko/pelanggan'],['Alamat','alamat','text','Alamat'],['No. HP','hp','tel','08xx']].map(([l,f,t,ph]) => (
+            <div key={f}><label style={S.lbl}>{l}</label><input style={S.inp} type={t} placeholder={ph} value={np[f]||''} onChange={e => setNp(p => ({ ...p, [f]: e.target.value }))} /></div>
+          ))}
+          <button style={{ ...S.btnGrn, marginTop: 8, background: '#1d4ed8' }} onClick={() => {
+            if (!np.nama.trim()) { alert('Nama wajib diisi!'); return }
+            simpanPelanggan(np.nama, np.alamat, np.hp)
+            const savedName = np.nama
+            setNp({ nama: '', alamat: '', hp: '' })
+            alert(`${savedName} berhasil ditambahkan!`)
+          }}>➕ Tambah Pelanggan</button>
 
           {/* Daftar pelanggan */}
           {pelanggan.length > 0 && (
