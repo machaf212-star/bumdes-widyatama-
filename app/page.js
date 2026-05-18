@@ -263,9 +263,12 @@ ${tx.metode==='tempo' ? '<div class="c" style="color:red">STATUS: BELUM LUNAS</d
 <div class="c">Terima kasih!</div>
 <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}</script>
 </body></html>`
-    const w = window.open('','_blank','width=400,height=600')
-    w.document.write(html)
-    w.document.close()
+    // Blob URL agar kompatibel di iPhone Safari
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'
+    document.body.appendChild(a); a.click(); document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 3000)
   }
 
   function kirimWAStruk(tx) {
@@ -281,8 +284,20 @@ ${tx.metode==='tempo' ? '<div class="c" style="color:red">STATUS: BELUM LUNAS</d
       (tx.metode==='tempo' ? `\nJatuh Tempo: ${tx.tempo}\n⚠️ STATUS: BELUM LUNAS` : '') +
       `\n\nTerima kasih atas kepercayaan Anda! 🙏`
     const hp = tx.hp ? tx.hp.replace(/[^0-9]/g,'').replace(/^0/,'62') : ''
-    const url = `https://wa.me/${hp}?text=${encodeURIComponent(teks)}`
-    window.open(url, '_blank')
+    // Coba wa.me dulu, jika gagal (iPhone) fallback ke copy clipboard
+    try {
+      const url = `https://wa.me/${hp}?text=${encodeURIComponent(teks)}`
+      const a = document.createElement('a')
+      a.href = url; a.target = '_blank'; a.rel = 'noopener'
+      document.body.appendChild(a); a.click(); document.body.removeChild(a)
+    } catch(e) {
+      // fallback: copy ke clipboard
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(teks).then(() => {
+          alert('Teks struk sudah dicopy!\nBuka WhatsApp → chat pelanggan → paste (tahan → Paste)')
+        })
+      }
+    }
   }
 
   // ── KWITANSI PENGELUARAN — PRINT & WA ──
@@ -319,9 +334,11 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
 <div class="c">${exp.by}</div>
 <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}</script>
 </body></html>`
-    const w = window.open('','_blank','width=400,height=600')
-    w.document.write(html)
-    w.document.close()
+    const blob2 = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url2 = URL.createObjectURL(blob2)
+    const a2 = document.createElement('a'); a2.href = url2; a2.target = '_blank'; a2.rel = 'noopener'
+    document.body.appendChild(a2); a2.click(); document.body.removeChild(a2)
+    setTimeout(() => URL.revokeObjectURL(url2), 3000)
   }
 
   function kirimWAKwitansi(exp) {
@@ -335,7 +352,18 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
       `━━━━━━━━━━━━━━━━━━\n` +
       `💸 *JUMLAH: ${rp(exp.jml)}*\n\n` +
       `Dicatat oleh: ${exp.by}`
-    window.open(`https://wa.me/?text=${encodeURIComponent(teks)}`, '_blank')
+    try {
+      const a = document.createElement('a')
+      a.href = `https://wa.me/?text=${encodeURIComponent(teks)}`
+      a.target = '_blank'; a.rel = 'noopener'
+      document.body.appendChild(a); a.click(); document.body.removeChild(a)
+    } catch(e) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(teks).then(() => {
+          alert('Teks kwitansi sudah dicopy!\nBuka WhatsApp → paste di chat tujuan')
+        })
+      }
+    }
   }
 
   // ── PRINT LAPORAN ──
