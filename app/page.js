@@ -547,6 +547,61 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
     }
   }
 
+  // ── SIMPAN PAKAN SESI (PAGI / SORE) ──
+  async function simpanPakanSesi(sesi) {
+    const pkA = sesi === 'pagi' ? (parseFloat(hd.pakanAPagi)||0) : (parseFloat(hd.pakanASore)||0)
+    const pkB = sesi === 'pagi' ? (parseFloat(hd.pakanBPagi)||0) : (parseFloat(hd.pakanBSore)||0)
+    if (pkA <= 0 && pkB <= 0) { alert(`Isi minimal satu field pakan ${sesi}!`); return }
+    if (pkA > cfg.pakan_a) { alert(`Pakan A melebihi stok (${f1(cfg.pakan_a)} kg)!`); return }
+    if (pkB > cfg.pakan_b) { alert(`Pakan B melebihi stok (${f1(cfg.pakan_b)} kg)!`); return }
+
+    try {
+      // Cek apakah sesi ini sudah diinput hari ini
+      const sudahAda = pakanHarian.find(p => p.tanggal === tod() && p.sesi === sesi)
+
+      if (sudahAda) {
+        // Timpa data lama — kembalikan stok lama dulu lalu kurangi dengan yang baru
+        const selisihA = pkA - (sudahAda.kandang_a || 0)
+        const selisihB = pkB - (sudahAda.kandang_b || 0)
+        const newPakanA = Math.max(0, cfg.pakan_a - selisihA)
+        const newPakanB = Math.max(0, cfg.pakan_b - selisihB)
+
+        await supabase.from('pakan_harian').update({
+          kandang_a: pkA, kandang_b: pkB, dicatat_oleh: user.nama
+        }).eq('id', sudahAda.id)
+
+        await saveCfg('pakan_a', newPakanA)
+        await saveCfg('pakan_b', newPakanB)
+        setCfg(prev => ({ ...prev, pakan_a: newPakanA, pakan_b: newPakanB }))
+        setPakanHarian(prev => prev.map(p =>
+          p.id === sudahAda.id ? { ...p, kandang_a: pkA, kandang_b: pkB } : p
+        ))
+      } else {
+        // Insert baru
+        const { data, error } = await supabase.from('pakan_harian').insert({
+          tanggal: tod(), sesi, kandang_a: pkA, kandang_b: pkB,
+          dicatat_oleh: user.nama
+        }).select().single()
+        if (error) throw error
+
+        const newPakanA = Math.max(0, cfg.pakan_a - pkA)
+        const newPakanB = Math.max(0, cfg.pakan_b - pkB)
+        await saveCfg('pakan_a', newPakanA)
+        await saveCfg('pakan_b', newPakanB)
+        setCfg(prev => ({ ...prev, pakan_a: newPakanA, pakan_b: newPakanB }))
+        setPakanHarian(prev => [data, ...prev])
+      }
+
+      // Reset field sesi yang disimpan
+      if (sesi === 'pagi') setHd(p => ({ ...p, pakanAPagi: '', pakanBPagi: '' }))
+      else setHd(p => ({ ...p, pakanASore: '', pakanBSore: '' }))
+
+      alert(`✅ Pakan ${sesi} disimpan!\nA: ${f1(pkA)} kg | B: ${f1(pkB)} kg\n\nSaat simpan panen sore, data pakan otomatis terhubung ke log panen.`)
+    } catch (err) {
+      alert('Gagal simpan pakan: ' + err.message)
+    }
+  }
+
   // ── SIMPAN KONSUMSI PAKAN ──
   async function simpanPakan() {
     const pkA     = (parseFloat(hd.pakanAPagi)||0) + (parseFloat(hd.pakanASore)||0)
