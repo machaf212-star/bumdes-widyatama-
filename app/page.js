@@ -449,8 +449,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
     setFocR(0)
   }
 
-  const curRooms  = rooms[kd]
-  const popK      = kd === 'A' ? cfg.pop_a : cfg.pop_b
+  const curRooms  = rooms[kd] || rooms['A']
+  const popK      = kd === 'B' ? cfg.pop_b : cfg.pop_a
   const totBtr    = curRooms.reduce((a, v) => a + (typeof v === 'number' ? v : 0), 0)
   const matiCnt   = curRooms.filter(v => v === 'mati').length
   const hdpLive   = popK > 0 ? (totBtr / popK) * 100 : 0
