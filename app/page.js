@@ -107,8 +107,9 @@ export default function App() {
   const [rooms,       setRooms]       = useState({ A: new Array(250).fill(null), B: new Array(181).fill(null) })
   const [loading,     setLoading]     = useState(true)
   const [hf,          setHf]          = useState('all')
-  const [tabelKd,     setTabelKd]     = useState('all')   // filter tabel produksi per kandang
+  const [tabelKd,     setTabelKd]     = useState('all')
   const [ef,          setEf]          = useState('all')
+  const [accordion,   setAccordion]   = useState({ A: false, B: false, pakan: false })
   const [localCfg,    setLocalCfg]    = useState(null)
   const [rekapPopup,  setRekapPopup]  = useState(null)
   const [waPopup,     setWaPopup]     = useState(null)
@@ -836,84 +837,52 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
     </>
   )
 
-  // Helper render grid kamar per kandang
-  const renderRoomGrid = (kdX) => {
-    const col = kdX === 'A' ? '#15803d' : '#0284c7'
-    const roomsKd = rooms[kdX]
-    const maxR = kdX === 'A' ? 250 : 181
-    return (
-      <div style={S.rg}>
-        {roomsKd.map((v, i) => {
-          const iD = v === 'mati', iF = v !== null
-          return (
-            <div key={i} style={{ borderRadius: 8, padding: '7px 6px', border: `1.5px solid ${iD ? '#fca5a5' : iF ? '#86efac' : '#e5e7eb'}`, background: iD ? '#fff1f2' : iF ? '#f0fdf4' : '#fff' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                <span style={{ fontSize: 9, fontWeight: 600, color: iD ? '#dc2626' : iF ? col : '#9ca3af' }}>K-{i+1} {iD ? 'X' : iF ? '✓'+v : ''}</span>
-                <button onClick={() => setRoom(kdX, i, 'mati')} style={{ background: 'none', border: 'none', fontSize: 8, color: '#dc2626', cursor: 'pointer' }}>Mati</button>
-              </div>
-              <div style={{ display: 'flex', gap: 2 }}>
-                {[0,1,2].map(n => (
-                  <button key={n} onClick={() => setRoom(kdX, i, n)}
-                    style={{ flex: 1, border: `1.5px solid ${v===n?col:'#e5e7eb'}`, borderRadius: 5, padding: '5px 0', fontWeight: 600, fontSize: 12, cursor: 'pointer', background: v===n?col:'transparent', color: v===n?'#fff':'#111', fontFamily: 'inherit' }}>{n}</button>
-                ))}
-                <button onClick={() => setRoom(kdX, i, 3)}
-                  style={{ flex: 1, border: `1.5px solid ${v===3?'#d97706':'#fde68a'}`, borderRadius: 5, padding: '5px 0', fontWeight: 700, fontSize: 12, cursor: 'pointer', background: v===3?'#d97706':'#fffbeb', color: v===3?'#fff':'#92400e', fontFamily: 'inherit' }}>3</button>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
-
   const renderInput = () => {
-    const mkSection = (kdX) => {
-      const col = kdX === 'A' ? '#15803d' : '#0284c7'
-      const bg  = kdX === 'A' ? '#f0fdf4' : '#eff6ff'
-      const pop = kdX === 'A' ? cfg.pop_a : cfg.pop_b
-      const fd  = kdX === 'A' ? hdA : hdB
+    const mkKandang = (kdX) => {
+      const col   = kdX === 'A' ? '#15803d' : '#0284c7'
+      const bg    = kdX === 'A' ? '#f0fdf4' : '#eff6ff'
+      const pop   = kdX === 'A' ? cfg.pop_a : cfg.pop_b
+      const fd    = kdX === 'A' ? hdA : hdB
       const setFd = kdX === 'A' ? setHdA : setHdB
-      const roomsKd = rooms[kdX]
+      const roomsKd  = rooms[kdX]
       const totBtrKd = roomsKd.reduce((a,v) => a+(typeof v==='number'?v:0), 0)
-      const matiKd = roomsKd.filter(v=>v==='mati').length
+      const matiKd   = roomsKd.filter(v=>v==='mati').length
       const filledKd = roomsKd.filter(v=>v!==null).length
-      const hdpKd = pop > 0 ? (totBtrKd / pop) * 100 : 0
+      const hdpKd    = pop > 0 ? (totBtrKd / pop) * 100 : 0
 
       return (
-        <div key={kdX} style={{ ...S.card, border: `1.5px solid ${col}33`, marginBottom: 10 }}>
-          {/* Header kandang */}
-          <div style={{ background: col, borderRadius: '8px 8px 0 0', margin: '-12px -14px 10px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>🐔 Kandang {kdX} — {pop} ekor</div>
-            <button onClick={() => { setRooms(prev => ({ ...prev, [kdX]: new Array(kdX==='A'?250:181).fill(null) })) }}
-              style={{ background: 'rgba(255,255,255,.2)', border: 'none', borderRadius: 5, padding: '3px 8px', color: '#fff', fontSize: 10, cursor: 'pointer' }}>Reset</button>
-          </div>
-
-          {/* HDP live */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+        <>
+          {/* HDP bar */}
+          <div style={{ ...S.stat, display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:7 }}>
             <div>
-              <div style={{ fontSize: 10, color: '#6b7280' }}>HDP Live</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: hdpKd>=78?col:'#d97706' }}>{f1(hdpKd)}%</div>
+              <div style={{ fontSize:10, color:'#6b7280' }}>HDP Live — Kandang {kdX}</div>
+              <div style={{ fontSize:20, fontWeight:700, color:hdpKd>=78?col:'#d97706' }}>{f1(hdpKd)}%</div>
             </div>
-            <div style={{ textAlign: 'right', fontSize: 10, color: '#6b7280' }}>
+            <div style={{ textAlign:'right', fontSize:10, color:'#6b7280' }}>
               <div>{totBtrKd} butir | {filledKd}/{kdX==='A'?250:181} kamar</div>
-              {matiKd > 0 && <div style={{ color: '#dc2626' }}>{matiKd} mati</div>}
+              {matiKd > 0 && <div style={{ color:'#dc2626' }}>{matiKd} kamar mati</div>}
             </div>
           </div>
-          <div style={{ ...S.bar, height: 5, marginBottom: 10 }}>
-            <div style={{ background: hdpKd>=78?col:'#d97706', width: `${Math.min(hdpKd,100)}%`, height: '100%', borderRadius: 99 }} />
+          <div style={{ ...S.bar, height:5, marginBottom:8 }}>
+            <div style={{ background:hdpKd>=78?col:'#d97706', width:`${Math.min(hdpKd,100)}%`, height:'100%', borderRadius:99 }} />
           </div>
 
           {/* Grid kamar */}
-          <div style={{ ...S.sec, marginBottom: 6 }}>Input per kamar</div>
-          {renderRoomGrid(kdX)}
+          <div style={{ ...S.card, padding:'9px 7px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+              <div style={S.sec}>Input per kamar</div>
+              <button style={S.btnSm} onClick={() => setRooms(prev => ({ ...prev, [kdX]: new Array(kdX==='A'?250:181).fill(null) }))}>Reset</button>
+            </div>
+            {renderRoomGrid(kdX)}
+          </div>
 
           {/* Form data panen */}
-          <div style={{ marginTop: 10 }}>
-            <div style={{ ...S.sec }}>Data panen Kandang {kdX}</div>
-            <label style={{ ...S.lbl, marginTop: 0 }}>Total berat panen (kg) *</label>
+          <div style={S.card}>
+            <div style={S.sec}>Data panen Kandang {kdX}</div>
+            <label style={{ ...S.lbl, marginTop:0 }}>Total berat panen (kg) *</label>
             <input style={S.inp} type="number" placeholder="Total kg dipanen" value={fd.kg}
               onChange={e => setFd(p => ({ ...p, kg: e.target.value }))} />
-            <div style={{ fontSize: 9, color: '#0284c7', marginTop: 2, marginBottom: 6 }}>
+            <div style={{ fontSize:9, color:'#0284c7', marginTop:2, marginBottom:6 }}>
               💡 Berat telur <strong>yang bagus saja</strong> (sudah dipisah dari yang rusak)
             </div>
             <div style={S.g2}>
@@ -926,111 +895,105 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
                 <label style={S.lbl}>🥚 Telur Rusak (butir)</label>
                 <input style={S.inp} type="number" placeholder="0" value={fd.rusak}
                   onChange={e => setFd(p => ({ ...p, rusak: e.target.value }))} />
-                <div style={{ fontSize: 9, color: '#9ca3af', marginTop: 2 }}>Dicatat, tidak kurangi stok</div>
+                <div style={{ fontSize:9, color:'#9ca3af', marginTop:2 }}>Dicatat, tidak kurangi stok</div>
               </div>
             </div>
-
-            {/* Preview */}
-            <div style={{ background: bg, borderRadius: 8, padding: '7px 10px', margin: '8px 0', fontSize: 11 }}>
-              <span style={{ fontWeight: 600, color: col }}>{totBtrKd} butir dari {filledKd} kamar — HDP {f1(hdpKd)}%</span>
-              {(parseInt(fd.rusak)||0)>0 && <span style={{ color: '#d97706', marginLeft: 8 }}>| Rusak: {fd.rusak} butir</span>}
+            <div style={{ background:bg, borderRadius:8, padding:'7px 10px', margin:'8px 0', fontSize:11 }}>
+              <span style={{ fontWeight:600, color:col }}>{totBtrKd} butir dari {filledKd} kamar — HDP {f1(hdpKd)}%</span>
+              {(parseInt(fd.rusak)||0)>0 && <span style={{ color:'#d97706', marginLeft:8 }}>| Rusak: {fd.rusak} butir</span>}
             </div>
-
-            <button style={{ ...S.btnGrn, background: col, marginTop: 4 }} onClick={() => simpanPanenKandang(kdX)}>
+            <button style={{ ...S.btnGrn, background:col }} onClick={() => simpanPanenKandang(kdX)}>
               💾 Simpan Panen Kandang {kdX}
             </button>
           </div>
-        </div>
+        </>
       )
     }
 
-    return (
-      <>
-        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Input Harian</div>
-        <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 10 }}>Panen & konsumsi pakan hari ini</div>
+    const tA = (parseFloat(hd.pakanAPagi)||0)+(parseFloat(hd.pakanASore)||0)
+    const tB = (parseFloat(hd.pakanBPagi)||0)+(parseFloat(hd.pakanBSore)||0)
+
+    const mkPakan = () => (
+      <div style={S.card}>
+        <div style={S.sec}>Konsumsi pakan hari ini</div>
 
         {/* Kandang A */}
-        {mkSection('A')}
+        <div style={{ marginBottom:10 }}>
+          <div style={{ fontSize:11, fontWeight:600, color:'#15803d', marginBottom:5 }}>
+            Kandang A — Stok: <strong>{f1(cfg.pakan_a)} kg</strong>
+          </div>
+          <div style={S.g2}>
+            <div>
+              <label style={{ ...S.lbl, marginTop:0 }}>🌅 Pagi (kg)</label>
+              <input style={S.inp} type="number" placeholder="0" value={hd.pakanAPagi}
+                onChange={e => setHd(p => ({ ...p, pakanAPagi: e.target.value }))} />
+            </div>
+            <div>
+              <label style={{ ...S.lbl, marginTop:0 }}>🌆 Sore (kg)</label>
+              <input style={S.inp} type="number" placeholder="0" value={hd.pakanASore}
+                onChange={e => setHd(p => ({ ...p, pakanASore: e.target.value }))} />
+            </div>
+          </div>
+          {tA > 0 && <div style={{ fontSize:10, marginTop:3, color:(cfg.pakan_a-tA)<0?'#dc2626':(cfg.pakan_a-tA)<50?'#d97706':'#15803d' }}>
+            Total A: {f1(tA)} kg → sisa {f1(Math.max(0,cfg.pakan_a-tA))} kg{(cfg.pakan_a-tA)<0?' ⚠ tidak cukup!':''}
+          </div>}
+        </div>
 
         {/* Kandang B */}
-        {mkSection('B')}
-
-        {/* Konsumsi Pakan - terpisah */}
-        <div style={{ ...S.card, border: '1.5px solid #fcd34d' }}>
-          <div style={{ background: '#d97706', borderRadius: '8px 8px 0 0', margin: '-12px -14px 10px', padding: '10px 14px' }}>
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>🌾 Konsumsi Pakan Hari Ini</span>
-            <span style={{ color: '#fef3c7', fontSize: 10, marginLeft: 8 }}>pagi + sore</span>
+        <div style={{ borderTop:'0.5px solid #fde68a', paddingTop:10, marginBottom:8 }}>
+          <div style={{ fontSize:11, fontWeight:600, color:'#0284c7', marginBottom:5 }}>
+            Kandang B — Stok: <strong>{f1(cfg.pakan_b)} kg</strong>
           </div>
-
-          {/* Kandang A pakan */}
-          <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#15803d', marginBottom: 5 }}>
-              Kandang A — Stok: <strong>{f1(cfg.pakan_a)} kg</strong>
+          <div style={S.g2}>
+            <div>
+              <label style={{ ...S.lbl, marginTop:0 }}>🌅 Pagi (kg)</label>
+              <input style={S.inp} type="number" placeholder="0" value={hd.pakanBPagi}
+                onChange={e => setHd(p => ({ ...p, pakanBPagi: e.target.value }))} />
             </div>
-            <div style={S.g2}>
-              <div>
-                <label style={{ ...S.lbl, marginTop: 0 }}>🌅 Pagi (kg)</label>
-                <input style={S.inp} type="number" placeholder="0" value={hd.pakanAPagi}
-                  onChange={e => setHd(p => ({ ...p, pakanAPagi: e.target.value }))} />
-              </div>
-              <div>
-                <label style={{ ...S.lbl, marginTop: 0 }}>🌆 Sore (kg)</label>
-                <input style={S.inp} type="number" placeholder="0" value={hd.pakanASore}
-                  onChange={e => setHd(p => ({ ...p, pakanASore: e.target.value }))} />
-              </div>
+            <div>
+              <label style={{ ...S.lbl, marginTop:0 }}>🌆 Sore (kg)</label>
+              <input style={S.inp} type="number" placeholder="0" value={hd.pakanBSore}
+                onChange={e => setHd(p => ({ ...p, pakanBSore: e.target.value }))} />
             </div>
-            {(() => {
-              const t = (parseFloat(hd.pakanAPagi)||0)+(parseFloat(hd.pakanASore)||0)
-              const s = cfg.pakan_a - t
-              return t > 0 ? <div style={{ fontSize: 10, marginTop: 3, color: s<0?'#dc2626':s<50?'#d97706':'#15803d' }}>Total A: {f1(t)} kg → sisa {f1(Math.max(0,s))} kg{s<0?' ⚠ tidak cukup!':''}</div> : null
-            })()}
           </div>
-
-          {/* Kandang B pakan */}
-          <div style={{ borderTop: '0.5px solid #fde68a', paddingTop: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#0284c7', marginBottom: 5 }}>
-              Kandang B — Stok: <strong>{f1(cfg.pakan_b)} kg</strong>
-            </div>
-            <div style={S.g2}>
-              <div>
-                <label style={{ ...S.lbl, marginTop: 0 }}>🌅 Pagi (kg)</label>
-                <input style={S.inp} type="number" placeholder="0" value={hd.pakanBPagi}
-                  onChange={e => setHd(p => ({ ...p, pakanBPagi: e.target.value }))} />
-              </div>
-              <div>
-                <label style={{ ...S.lbl, marginTop: 0 }}>🌆 Sore (kg)</label>
-                <input style={S.inp} type="number" placeholder="0" value={hd.pakanBSore}
-                  onChange={e => setHd(p => ({ ...p, pakanBSore: e.target.value }))} />
-              </div>
-            </div>
-            {(() => {
-              const t = (parseFloat(hd.pakanBPagi)||0)+(parseFloat(hd.pakanBSore)||0)
-              const s = cfg.pakan_b - t
-              return t > 0 ? <div style={{ fontSize: 10, marginTop: 3, color: s<0?'#dc2626':s<50?'#d97706':'#15803d' }}>Total B: {f1(t)} kg → sisa {f1(Math.max(0,s))} kg{s<0?' ⚠ tidak cukup!':''}</div> : null
-            })()}
-          </div>
-
-          {/* Total pakan */}
-          {(() => {
-            const tA = (parseFloat(hd.pakanAPagi)||0)+(parseFloat(hd.pakanASore)||0)
-            const tB = (parseFloat(hd.pakanBPagi)||0)+(parseFloat(hd.pakanBSore)||0)
-            return (tA+tB) > 0 ? (
-              <div style={{ background: '#fffbeb', borderRadius: 8, padding: '6px 8px', marginTop: 8, fontSize: 11, color: '#92400e' }}>
-                Total pakan hari ini: <strong>{f1(tA+tB)} kg</strong> (A: {f1(tA)} kg + B: {f1(tB)} kg)
-              </div>
-            ) : null
-          })()}
-
-          <div style={{ fontSize: 10, color: '#6b7280', marginTop: 8, marginBottom: 4 }}>
-            Pembelian pakan baru? Catat di menu Pengeluaran
-          </div>
-          <button style={{ ...S.btnGrn, background: '#d97706', marginTop: 4 }} onClick={simpanPakan}>
-            💾 Simpan Konsumsi Pakan
-          </button>
+          {tB > 0 && <div style={{ fontSize:10, marginTop:3, color:(cfg.pakan_b-tB)<0?'#dc2626':(cfg.pakan_b-tB)<50?'#d97706':'#15803d' }}>
+            Total B: {f1(tB)} kg → sisa {f1(Math.max(0,cfg.pakan_b-tB))} kg{(cfg.pakan_b-tB)<0?' ⚠ tidak cukup!':''}
+          </div>}
         </div>
+
+        {(tA+tB) > 0 && (
+          <div style={{ background:'#fffbeb', borderRadius:8, padding:'6px 8px', marginBottom:8, fontSize:11, color:'#92400e' }}>
+            Total: <strong>{f1(tA+tB)} kg</strong> (A: {f1(tA)} kg + B: {f1(tB)} kg)
+          </div>
+        )}
+        <div style={{ fontSize:10, color:'#6b7280', marginBottom:6 }}>Pembelian pakan baru? Catat di menu Pengeluaran</div>
+        <button style={{ ...S.btnGrn, background:'#d97706' }} onClick={simpanPakan}>💾 Simpan Konsumsi Pakan</button>
+      </div>
+    )
+
+    return (
+      <>
+        {/* Tab bar */}
+        <div style={{ display:'flex', background:'#f9fafb', borderRadius:10, padding:3, marginBottom:10, gap:3 }}>
+          {[['A','🐔 Kandang A','#15803d'],['B','🐔 Kandang B','#0284c7'],['pakan','🌾 Pakan','#d97706']].map(([k,v,c]) => (
+            <button key={k} onClick={() => setKd(k)}
+              style={{ flex:1, padding:'8px 0', borderRadius:8, border:'none', fontSize:11, fontWeight:600, cursor:'pointer',
+                background: kd===k ? c : 'transparent',
+                color: kd===k ? '#fff' : '#6b7280',
+                fontFamily:'inherit', lineHeight:1.3 }}>
+              {v}
+            </button>
+          ))}
+        </div>
+
+        {/* Konten tab */}
+        {kd === 'A' && mkKandang('A')}
+        {kd === 'B' && mkKandang('B')}
+        {kd === 'pakan' && mkPakan()}
       </>
     )
   }
+
 
   const renderKasir = () => {
     const prev = (parseFloat(td.kg) || 0) * (parseFloat(td.harga) || 0)
