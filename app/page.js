@@ -83,6 +83,7 @@ export default function App() {
     pop_a: 500, pop_b: 362,
     pakan_a: 200, pakan_b: 150,
     kas: 5000000, stok_kg: 0, stok_butir: 0,
+    modal_awal: 0,  // modal/saldo awal sebelum aplikasi dipakai
   })
 
   // ── DATA LOGS ──
@@ -149,6 +150,7 @@ export default function App() {
           kas:         parseFloat(cfgMap.kas)     || prev.kas,
           stok_kg:     parseFloat(cfgMap.stok_kg) || 0,
           stok_butir:  parseInt(cfgMap.stok_butir) || 0,
+          modal_awal:  parseFloat(cfgMap.modal_awal) || 0,
         }))
       }
 
@@ -731,7 +733,9 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
   // RENDER PAGES
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const renderDash = () => (
+  const renderDash = () => {
+    const saldoKasTotal = cfg.modal_awal + totalIncome - totalExpense
+    return (
     <>
       <div style={S.g2}>
         {[['Stok Telur', `${f1(cfg.stok_kg)} kg`, `${cfg.stok_butir} butir`, '#15803d'],
@@ -745,6 +749,34 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
             <div style={{ fontSize: 10, color: '#9ca3af' }}>{s}</div>
           </div>
         ))}
+      </div>
+
+      {/* Modal Awal + Saldo Kas */}
+      <div style={{ ...S.card, marginTop: 8, background: '#f0fdf4', border: '0.5px solid #bbf7d0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 10, color: '#6b7280' }}>Saldo Kas Aktual</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#15803d' }}>{rp(saldoKasTotal)}</div>
+            <div style={{ fontSize: 9, color: '#6b7280', marginTop: 2 }}>
+              Modal Awal {rp(cfg.modal_awal)} + Pendapatan {rp(totalIncome)} − Pengeluaran {rp(totalExpense)}
+            </div>
+          </div>
+          {cfg.modal_awal === 0 && (
+            <div style={{ background: '#fffbeb', borderRadius: 8, padding: '6px 10px', fontSize: 10, color: '#92400e', maxWidth: 120, textAlign: 'center' }}>
+              ⚠ Set modal awal di Pengaturan
+            </div>
+          )}
+        </div>
+        {cfg.modal_awal > 0 && (
+          <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+            {[['Modal Awal', cfg.modal_awal, '#15803d'], ['+ Pendapatan', totalIncome, '#0284c7'], ['− Pengeluaran', totalExpense, '#dc2626']].map(([l, v, c]) => (
+              <div key={l} style={{ flex: 1, background: '#fff', borderRadius: 6, padding: '5px 6px', textAlign: 'center' }}>
+                <div style={{ fontSize: 8, color: '#6b7280' }}>{l}</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: c }}>{rp(v)}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div style={{ ...S.card, marginTop: 8 }}>
@@ -829,7 +861,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
         </div>
       </div>
     </>
-  )
+  )}
 
   // ── HELPER RENDER GRID KAMAR ──
   const renderRoomGrid = (kdX) => {
@@ -1619,6 +1651,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
       kecamatan: cfg.kecamatan || '',
       kabupaten: cfg.kabupaten || '',
       kas: Math.round(cfg.kas || 0),
+      modal_awal: Math.round(cfg.modal_awal || 0),
       pop_a: cfg.pop_a || 500,
       pop_b: cfg.pop_b || 362,
       pakan_a: cfg.pakan_a || 200,
@@ -1637,7 +1670,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
         setCfg(prev => ({ ...prev, ...sv,
           kas: +sv.kas, pop_a: +sv.pop_a, pop_b: +sv.pop_b,
           pakan_a: +sv.pakan_a, pakan_b: +sv.pakan_b,
-          stok_kg: +sv.stok_kg,         // ← update stok telur di state
+          stok_kg: +sv.stok_kg, modal_awal: +sv.modal_awal,
         }))
         alert('Pengaturan berhasil disimpan!')
       } catch(err) {
@@ -1661,9 +1694,23 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
         </div>
         <div style={S.card}>
           <div style={S.sec}>Keuangan & kas</div>
-          <label style={{ ...S.lbl, marginTop: 0 }}>Set saldo kas (Rp)</label>
-          <input style={S.inp} type="number" value={sv.kas} onChange={e => setSv(p => ({ ...p, kas: e.target.value }))} />
-          <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 4 }}>Saldo saat ini: <strong>{rp(cfg.kas)}</strong></div>
+
+          <label style={{ ...S.lbl, marginTop: 0 }}>💰 Modal Awal / Saldo Sebelum Pakai Aplikasi (Rp)</label>
+          <input style={S.inp} type="number" placeholder="0" value={sv.modal_awal}
+            onChange={e => setSv(p => ({ ...p, modal_awal: e.target.value }))} />
+          <div style={{ background: '#fffbeb', borderRadius: 7, padding: '7px 10px', fontSize: 10, color: '#92400e', margin: '5px 0 10px' }}>
+            💡 Isi dengan total uang BUMDes yang sudah ada <strong>sebelum</strong> aplikasi dipakai —
+            termasuk pendapatan penjualan telur yang belum tercatat. Bukan pendapatan, murni modal awal.
+          </div>
+
+          <label style={S.lbl}>Saldo kas manual (Rp)</label>
+          <input style={S.inp} type="number" value={sv.kas}
+            onChange={e => setSv(p => ({ ...p, kas: e.target.value }))} />
+
+          <div style={{ background: '#f0fdf4', borderRadius: 7, padding: '7px 10px', fontSize: 10, color: '#15803d', marginTop: 6 }}>
+            <strong>Saldo kas aktual:</strong> {rp((+sv.modal_awal||0) + totalIncome - totalExpense)}<br/>
+            <span style={{ color: '#6b7280' }}>= Modal Awal ({rp(+sv.modal_awal||0)}) + Pendapatan ({rp(totalIncome)}) − Pengeluaran ({rp(totalExpense)})</span>
+          </div>
         </div>
 
         <div style={S.card}>
@@ -2020,7 +2067,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ textAlign: 'right' }}>
             <div style={{ color: '#bbf7d0', fontSize: 9 }}>Saldo kas</div>
-            <div style={{ color: '#fff', fontWeight: 600, fontSize: 12 }}>{rp(cfg.kas)}</div>
+            <div style={{ color: '#fff', fontWeight: 600, fontSize: 12 }}>{rp(cfg.modal_awal + totalIncome - totalExpense)}</div>
           </div>
           <button onClick={doLogout} style={{ background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 6, padding: '4px 8px', color: '#fff', fontSize: 9, cursor: 'pointer' }}>Keluar</button>
         </div>
