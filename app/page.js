@@ -108,6 +108,7 @@ export default function App() {
   const [ef,          setEf]          = useState('all')
   const [localCfg,    setLocalCfg]    = useState(null)
   const [rekapPopup,  setRekapPopup]  = useState(null)  // {log} untuk popup rekap kamar
+  const [waPopup,     setWaPopup]     = useState(null)  // {teks, hp} untuk popup WA
 
   const txRef = useRef(1000)
   const exRef = useRef(1)
@@ -284,20 +285,7 @@ ${tx.metode==='tempo' ? '<div class="c" style="color:red">STATUS: BELUM LUNAS</d
       (tx.metode==='tempo' ? `\nJatuh Tempo: ${tx.tempo}\n⚠️ STATUS: BELUM LUNAS` : '') +
       `\n\nTerima kasih atas kepercayaan Anda! 🙏`
     const hp = tx.hp ? tx.hp.replace(/[^0-9]/g,'').replace(/^0/,'62') : ''
-    // Coba wa.me dulu, jika gagal (iPhone) fallback ke copy clipboard
-    try {
-      const url = `https://wa.me/${hp}?text=${encodeURIComponent(teks)}`
-      const a = document.createElement('a')
-      a.href = url; a.target = '_blank'; a.rel = 'noopener'
-      document.body.appendChild(a); a.click(); document.body.removeChild(a)
-    } catch(e) {
-      // fallback: copy ke clipboard
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(teks).then(() => {
-          alert('Teks struk sudah dicopy!\nBuka WhatsApp → chat pelanggan → paste (tahan → Paste)')
-        })
-      }
-    }
+    setWaPopup({ teks, hp, judul: 'Struk Penjualan' })
   }
 
   // ── KWITANSI PENGELUARAN — PRINT & WA ──
@@ -352,18 +340,7 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kan
       `━━━━━━━━━━━━━━━━━━\n` +
       `💸 *JUMLAH: ${rp(exp.jml)}*\n\n` +
       `Dicatat oleh: ${exp.by}`
-    try {
-      const a = document.createElement('a')
-      a.href = `https://wa.me/?text=${encodeURIComponent(teks)}`
-      a.target = '_blank'; a.rel = 'noopener'
-      document.body.appendChild(a); a.click(); document.body.removeChild(a)
-    } catch(e) {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(teks).then(() => {
-          alert('Teks kwitansi sudah dicopy!\nBuka WhatsApp → paste di chat tujuan')
-        })
-      }
-    }
+    setWaPopup({ teks, hp: '', judul: 'Kwitansi Pengeluaran' })
   }
 
   // ── PRINT LAPORAN ──
@@ -1730,6 +1707,71 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
     alert('CSV berhasil diunduh!')
   }
 
+  // ─── WA POPUP ────────────────────────────────────────────────────────────────
+  const WAPopup = () => {
+    if (!waPopup) return null
+    const { teks, hp, judul } = waPopup
+    const [copied, setCopied] = useState(false)
+
+    function doCopy() {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(teks).then(() => {
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2500)
+        })
+      } else {
+        // fallback untuk browser lama
+        const ta = document.createElement('textarea')
+        ta.value = teks; ta.style.position = 'fixed'; ta.style.opacity = '0'
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy')
+        document.body.removeChild(ta)
+        setCopied(true); setTimeout(() => setCopied(false), 2500)
+      }
+    }
+
+    function bukaWA() {
+      const url = hp
+        ? `https://wa.me/${hp}?text=${encodeURIComponent(teks)}`
+        : `https://wa.me/?text=${encodeURIComponent(teks)}`
+      window.location.href = url
+    }
+
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 70, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+        <div style={{ background: '#fff', borderRadius: '14px 14px 0 0', padding: 16, width: '100%', maxWidth: 430, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <div style={{ fontWeight: 600, fontSize: 13 }}>💬 Kirim via WhatsApp</div>
+            <button onClick={() => setWaPopup(null)} style={{ background: '#f3f4f6', border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+          </div>
+          <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 10 }}>{judul}</div>
+
+          {/* Preview teks */}
+          <div style={{ background: '#f9fafb', borderRadius: 8, padding: 10, fontSize: 11, whiteSpace: 'pre-wrap', overflowY: 'auto', flex: 1, marginBottom: 12, border: '0.5px solid #e5e7eb', fontFamily: 'monospace', lineHeight: 1.5 }}>
+            {teks}
+          </div>
+
+          {/* Instruksi iPhone */}
+          <div style={{ background: '#fffbeb', borderRadius: 8, padding: '8px 10px', fontSize: 10, color: '#92400e', marginBottom: 10 }}>
+            <strong>Cara kirim di iPhone:</strong> Tap "Copy Teks" → buka WhatsApp → pilih chat pelanggan → tahan area pesan → Paste → kirim
+          </div>
+
+          {/* Tombol aksi */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={doCopy}
+              style={{ flex: 1, background: copied ? '#15803d' : '#f0fdf4', color: copied ? '#fff' : '#15803d', border: `1px solid ${copied?'#15803d':'#bbf7d0'}`, borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              {copied ? '✓ Tersalin!' : '📋 Copy Teks'}
+            </button>
+            <button onClick={bukaWA}
+              style={{ flex: 1, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              💬 Buka WA
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // ─── REKAP KAMAR POPUP ──────────────────────────────────────────────────────
   const RekapPopup = () => {
     if (!rekapPopup) return null
@@ -1847,6 +1889,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
   return (
     <div style={S.wrap}>
       {notif && <div style={notif(notif.err)}>{notif.msg}</div>}
+      <WAPopup />
       <RekapPopup />
       <ReceiptModal />
 
