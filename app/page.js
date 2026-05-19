@@ -231,54 +231,49 @@ export default function App() {
     setPelanggan(prev => prev.filter(p => p.id !== id))
   }
 
+  // ── STATE PRINT POPUP ──
+  const [printPopup, setPrintPopup] = useState(null) // {html, title}
+
   // ── STRUK PENJUALAN — PRINT & WA ──
   function printStruk(tx) {
     const pm = PAY_METHODS.find(p => p.id === tx.metode)
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Struk ${tx.no}</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Courier New',monospace;font-size:11px;width:58mm;padding:4mm}
-.c{text-align:center}.b{font-weight:bold}.lg{font-size:13px}
-hr{border:none;border-top:1px dashed #000;margin:4px 0}
-.row{display:flex;justify-content:space-between}
-.tot{font-size:14px;font-weight:bold}
+body{font-family:'Courier New',monospace;font-size:12px;width:100%;padding:4mm;color:#000}
+.c{text-align:center}.b{font-weight:bold}.lg{font-size:14px}
+hr{border:none;border-top:1px dashed #000;margin:5px 0}
+.row{display:flex;justify-content:space-between;margin-bottom:2px}
+.tot{font-size:16px;font-weight:bold}
 </style></head><body>
 <div class="c b lg">${cfg.nama_bumdes}</div>
-<div class="c">${cfg.desa}, ${cfg.kecamatan}</div>
-<div class="c">${cfg.kabupaten}</div>
-<div class="c">Telur Ayam Petelur Segar</div>
+<div class="c" style="font-size:11px">${cfg.desa}, ${cfg.kecamatan}, ${cfg.kabupaten}</div>
+<div class="c" style="font-size:11px">Telur Ayam Petelur Segar</div>
 <hr>
-<div class="row"><span>No. Transaksi</span><span>${tx.no}</span></div>
-<div class="row"><span>Tanggal</span><span>${tx.tgl}</span></div>
+<div class="row"><span>No.</span><span>${tx.no}</span></div>
+<div class="row"><span>Tanggal</span><span style="font-size:10px">${tx.tgl}</span></div>
 <div class="row"><span>Kasir</span><span>${tx.by}</span></div>
 <div class="row"><span>Pelanggan</span><span>${tx.nama}</span></div>
-${tx.alamat ? `<div class="row"><span>Alamat</span><span>${tx.alamat}</span></div>` : ''}
+${tx.alamat ? `<div class="row"><span>Alamat</span><span style="max-width:55%;text-align:right">${tx.alamat}</span></div>` : ''}
 ${tx.hp ? `<div class="row"><span>No. HP</span><span>${tx.hp}</span></div>` : ''}
 <div class="row"><span>Metode</span><span>${pm ? pm.label : tx.metode}</span></div>
-${tx.metode==='transfer' ? `<div class="row"><span>Bank</span><span>${tx.bank} (${tx.norek})</span></div>` : ''}
-${tx.metode==='tempo' ? `<div class="row"><span>Jatuh Tempo</span><span>${tx.tempo}</span></div>` : ''}
+${tx.metode==='transfer' ? `<div class="row"><span>Bank</span><span>${tx.bank}(${tx.norek})</span></div>` : ''}
+${tx.metode==='tempo' ? `<div class="row"><span>J. Tempo</span><span>${tx.tempo}</span></div>` : ''}
 <hr>
-<div class="row"><span>Telur Ayam</span><span>${tx.kg} kg x ${rp(tx.harga)}</span></div>
+<div class="row"><span>Telur Ayam</span><span>${tx.kg}kg x ${rp(tx.harga)}</span></div>
 <hr>
 <div class="row tot"><span>TOTAL</span><span>${rp(tx.total)}</span></div>
 <hr>
-${tx.metode==='tempo' ? '<div class="c" style="color:red">STATUS: BELUM LUNAS</div><hr>' : ''}
+${tx.metode==='tempo' ? '<div class="c b" style="color:red;font-size:11px">BELUM LUNAS</div><hr>' : ''}
 <br>
-<div class="c">Tanda Tangan Kasir</div>
-<br><br><br>
-<div class="c">___________________</div>
-<div class="c">${tx.by}</div>
+<div class="c" style="font-size:11px">Tanda Tangan Kasir</div>
+<br><br>
+<div class="c">_______________</div>
+<div class="c" style="font-size:11px">${tx.by}</div>
 <br>
-<div class="c">Terima kasih!</div>
-<script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}</script>
+<div class="c" style="font-size:11px">Terima kasih!</div>
 </body></html>`
-    // Blob URL agar kompatibel di iPhone Safari
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'
-    document.body.appendChild(a); a.click(); document.body.removeChild(a)
-    setTimeout(() => URL.revokeObjectURL(url), 3000)
+    setPrintPopup({ html, title: `Struk ${tx.no}` })
   }
 
   function kirimWAStruk(tx) {
@@ -301,41 +296,35 @@ ${tx.metode==='tempo' ? '<div class="c" style="color:red">STATUS: BELUM LUNAS</d
   function printKwitansi(exp) {
     const ki = katOf(exp.kat)
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Kwitansi ${exp.no}</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Courier New',monospace;font-size:11px;width:58mm;padding:4mm}
-.c{text-align:center}.b{font-weight:bold}.lg{font-size:13px}
-hr{border:none;border-top:1px dashed #000;margin:4px 0}
-.row{display:flex;justify-content:space-between}
-.tot{font-size:14px;font-weight:bold}
+body{font-family:'Courier New',monospace;font-size:12px;width:100%;padding:4mm;color:#000}
+.c{text-align:center}.b{font-weight:bold}.lg{font-size:14px}
+hr{border:none;border-top:1px dashed #000;margin:5px 0}
+.row{display:flex;justify-content:space-between;margin-bottom:2px}
+.tot{font-size:16px;font-weight:bold}
 </style></head><body>
 <div class="c b lg">${cfg.nama_bumdes}</div>
-<div class="c">${cfg.desa}, ${cfg.kecamatan}</div>
+<div class="c" style="font-size:11px">${cfg.desa}, ${cfg.kecamatan}, ${cfg.kabupaten}</div>
 <hr>
 <div class="c b">KWITANSI PENGELUARAN</div>
 <hr>
 <div class="row"><span>No.</span><span>${exp.no}</span></div>
 <div class="row"><span>Tanggal</span><span>${exp.tgl}</span></div>
-<div class="row"><span>Kategori</span><span>${ki.ic} ${ki.label}</span></div>
-<div class="row"><span>Keterangan</span><span>${exp.ket}</span></div>
-${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty} kg (Kand.${exp.kdPakan})</span></div>` : ''}
-<div class="row"><span>Dicatat oleh</span><span>${exp.by}</span></div>
+<div class="row"><span>Kategori</span><span>${ki.label}</span></div>
+<div class="row"><span>Keterangan</span><span style="max-width:55%;text-align:right">${exp.ket}</span></div>
+${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty}kg Kand.${exp.kdPakan}</span></div>` : ''}
+<div class="row"><span>Oleh</span><span>${exp.by}</span></div>
 <hr>
 <div class="row tot"><span>JUMLAH</span><span>${rp(exp.jml)}</span></div>
 <hr>
 <br>
-<div class="c">Tanda Tangan</div>
-<br><br><br>
-<div class="c">___________________</div>
-<div class="c">${exp.by}</div>
-<script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}</script>
+<div class="c" style="font-size:11px">Tanda Tangan</div>
+<br><br>
+<div class="c">_______________</div>
+<div class="c" style="font-size:11px">${exp.by}</div>
 </body></html>`
-    const blob2 = new Blob([html], { type: 'text/html;charset=utf-8' })
-    const url2 = URL.createObjectURL(blob2)
-    const a2 = document.createElement('a'); a2.href = url2; a2.target = '_blank'; a2.rel = 'noopener'
-    document.body.appendChild(a2); a2.click(); document.body.removeChild(a2)
-    setTimeout(() => URL.revokeObjectURL(url2), 3000)
+    setPrintPopup({ html, title: `Kwitansi ${exp.no}` })
   }
 
   function kirimWAKwitansi(exp) {
@@ -1795,6 +1784,47 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
     alert('CSV berhasil diunduh!')
   }
 
+  // ─── PRINT POPUP ─────────────────────────────────────────────────────────────
+  const PrintPopup = () => {
+    if (!printPopup) return null
+    return (
+      <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', zIndex:80, display:'flex', flexDirection:'column' }}>
+        {/* Header */}
+        <div style={{ background:'#15803d', padding:'10px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
+          <div style={{ color:'#fff', fontWeight:600, fontSize:13 }}>🖨 {printPopup.title}</div>
+          <button onClick={() => setPrintPopup(null)}
+            style={{ background:'rgba(255,255,255,.2)', border:'none', borderRadius:6, padding:'4px 10px', color:'#fff', fontSize:12, cursor:'pointer' }}>✕ Tutup</button>
+        </div>
+
+        {/* Preview iframe */}
+        <div style={{ flex:1, background:'#fff', overflow:'hidden' }}>
+          <iframe
+            srcDoc={printPopup.html}
+            style={{ width:'100%', height:'100%', border:'none' }}
+            title="Preview Struk"
+          />
+        </div>
+
+        {/* Tombol aksi */}
+        <div style={{ background:'#fff', padding:'10px 14px', display:'flex', gap:8, borderTop:'0.5px solid #e5e7eb', flexShrink:0 }}>
+          <button
+            onClick={() => {
+              const iframe = document.querySelector('iframe[title="Preview Struk"]')
+              if (iframe) iframe.contentWindow.print()
+              else alert('Tap tombol Share di browser → Print → pilih printer RPP02')
+            }}
+            style={{ flex:1, background:'#15803d', color:'#fff', border:'none', borderRadius:8, padding:'12px 0', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+            🖨 Print Sekarang
+          </button>
+          <button onClick={() => setPrintPopup(null)}
+            style={{ flex:1, background:'#f9fafb', color:'#374151', border:'0.5px solid #e5e7eb', borderRadius:8, padding:'12px 0', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+            Tutup
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // ─── WA POPUP ────────────────────────────────────────────────────────────────
   const WAPopup = () => {
     if (!waPopup) return null
@@ -1977,6 +2007,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
   return (
     <div style={S.wrap}>
       {notif && <div style={notif(notif.err)}>{notif.msg}</div>}
+      <PrintPopup />
       <WAPopup />
       <RekapPopup />
       <ReceiptModal />
