@@ -94,6 +94,8 @@ export default function App() {
   const [pelanggan, setPelanggan] = useState([])  // daftar pelanggan langganan
 
   // ── FORM DRAFTS ──
+  const [hdA, setHdA] = useState({ kg: '', km: '', rusak: '' })  // form kandang A
+  const [hdB, setHdB] = useState({ kg: '', km: '', rusak: '' })  // form kandang B
   const [hd, setHd] = useState({ kg: '', km: '', rusak: '', pakanAPagi: '', pakanASore: '', pakanBPagi: '', pakanBSore: '' })
   const [td, setTd] = useState({ kg: '', harga: '25000', nama: '', alamat: '', hp: '', metode: 'tunai', bank: '', norek: '', tempo: '' })
   const [ed, setEd] = useState({ kat: 'pakan', tgl: tod(), jml: '', ket: '', qty: '', kdPakan: 'A' })
@@ -105,10 +107,11 @@ export default function App() {
   const [rooms,       setRooms]       = useState({ A: new Array(250).fill(null), B: new Array(181).fill(null) })
   const [loading,     setLoading]     = useState(true)
   const [hf,          setHf]          = useState('all')
+  const [tabelKd,     setTabelKd]     = useState('all')   // filter tabel produksi per kandang
   const [ef,          setEf]          = useState('all')
   const [localCfg,    setLocalCfg]    = useState(null)
-  const [rekapPopup,  setRekapPopup]  = useState(null)  // {log} untuk popup rekap kamar
-  const [waPopup,     setWaPopup]     = useState(null)  // {teks, hp} untuk popup WA
+  const [rekapPopup,  setRekapPopup]  = useState(null)
+  const [waPopup,     setWaPopup]     = useState(null)
 
   const txRef = useRef(1000)
   const exRef = useRef(1)
@@ -468,68 +471,79 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
     return m
   }
 
-  // ── SIMPAN PANEN ──
-  async function simpanPanen() {
-    const kgV = parseFloat(hd.kg) || 0
-    if (kgV <= 0) { alert('Total kg panen wajib diisi!'); return }
+  // ── SIMPAN PANEN PER KANDANG ──
+  async function simpanPanenKandang(kdX) {
+    const formData = kdX === 'A' ? hdA : hdB
+    const roomsKd = rooms[kdX]
+    const totBtrKd = roomsKd.reduce((a, v) => a + (typeof v === 'number' ? v : 0), 0)
+    const matiKd = roomsKd.filter(v => v === 'mati').length
 
-    // Pakan = pagi + sore masing-masing kandang
-    const pkA = (parseFloat(hd.pakanAPagi) || 0) + (parseFloat(hd.pakanASore) || 0)
-    const pkB = (parseFloat(hd.pakanBPagi) || 0) + (parseFloat(hd.pakanBSore) || 0)
-    if (pkA > cfg.pakan_a) { alert(`Pakan A melebihi stok (${f1(cfg.pakan_a)} kg)!`); return }
-    if (pkB > cfg.pakan_b) { alert(`Pakan B melebihi stok (${f1(cfg.pakan_b)} kg)!`); return }
+    const kgV = parseFloat(formData.kg) || 0
+    if (kgV <= 0) { alert(`Total kg panen Kandang ${kdX} wajib diisi!`); return }
 
-    const rusakV = parseInt(hd.rusak) || 0
-    const kmV = parseInt(hd.km) || matiCnt
-    const popKey = kd === 'A' ? 'pop_a' : 'pop_b'
+    const rusakV = parseInt(formData.rusak) || 0
+    const kmV = parseInt(formData.km) || matiKd
+    const popKey = kdX === 'A' ? 'pop_a' : 'pop_b'
     const newPop = Math.max(0, cfg[popKey] - kmV)
-    const hdp = newPop > 0 ? (totBtr / newPop) * 100 : 0
-    const newPakanA = Math.max(0, cfg.pakan_a - pkA)
-    const newPakanB = Math.max(0, cfg.pakan_b - pkB)
+    const hdp = newPop > 0 ? (totBtrKd / newPop) * 100 : 0
     const newStokKg = cfg.stok_kg + kgV
-    const newStokBtr = cfg.stok_butir + totBtr
-
-    // Simpan detail per kamar sebagai JSON
-    const roomDetail = JSON.stringify(curRooms)
+    const newStokBtr = cfg.stok_butir + totBtrKd
+    const roomDetail = JSON.stringify(roomsKd)
 
     try {
       const { error } = await supabase.from('panen').insert({
-        kandang: kd, total_butir: totBtr, total_kg: kgV, hdp,
-        kematian: kmV, pakan_a: pkA, pakan_b: pkB,
-        pakan_a_pagi: parseFloat(hd.pakanAPagi)||0,
-        pakan_a_sore: parseFloat(hd.pakanASore)||0,
-        pakan_b_pagi: parseFloat(hd.pakanBPagi)||0,
-        pakan_b_sore: parseFloat(hd.pakanBSore)||0,
-        telur_rusak: rusakV,
-        room_detail: roomDetail,
+        kandang: kdX, total_butir: totBtrKd, total_kg: kgV, hdp,
+        kematian: kmV, pakan_a: 0, pakan_b: 0,
+        pakan_a_pagi: 0, pakan_a_sore: 0, pakan_b_pagi: 0, pakan_b_sore: 0,
+        telur_rusak: rusakV, room_detail: roomDetail,
         dicatat_oleh: user.nama, tanggal: tod(),
       })
       if (error) throw error
 
       await saveCfg(popKey, newPop)
-      await saveCfg('pakan_a', newPakanA)
-      await saveCfg('pakan_b', newPakanB)
       await saveCfg('stok_kg', newStokKg)
       await saveCfg('stok_butir', newStokBtr)
+      setCfg(prev => ({ ...prev, [popKey]: newPop, stok_kg: newStokKg, stok_butir: newStokBtr }))
 
-      setCfg(prev => ({ ...prev, [popKey]: newPop, pakan_a: newPakanA, pakan_b: newPakanB, stok_kg: newStokKg, stok_butir: newStokBtr }))
       const tgl = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
       setHlog(prev => [{
-        id: Date.now(), tgl, tgl2: tod(), kd, tb: totBtr, kg: kgV, hdp,
-        km: kmV, rusak: rusakV,
-        pakanA: pkA, pakanB: pkB,
-        pakanAPagi: parseFloat(hd.pakanAPagi)||0, pakanASore: parseFloat(hd.pakanASore)||0,
-        pakanBPagi: parseFloat(hd.pakanBPagi)||0, pakanBSore: parseFloat(hd.pakanBSore)||0,
-        roomDetail: curRooms.slice(), by: user.nama,
+        id: Date.now(), tgl, tgl2: tod(), kd: kdX, tb: totBtrKd, kg: kgV, hdp,
+        km: kmV, rusak: rusakV, pakanA: 0, pakanB: 0,
+        roomDetail: roomsKd.slice(), by: user.nama,
       }, ...prev])
-      setRooms(prev => ({ ...prev, [kd]: new Array(kd === 'A' ? 250 : 181).fill(null) }))
-      setFocR(0)
-      setHd({ kg: '', km: '', rusak: '', pakanAPagi: '', pakanASore: '', pakanBPagi: '', pakanBSore: '' })
-      alert(`Panen disimpan!\n${totBtr} butir | ${kgV} kg | HDP ${f1(hdp)}%${rusakV > 0 ? `\nTelur rusak: ${rusakV} butir` : ''}`)
+      setRooms(prev => ({ ...prev, [kdX]: new Array(kdX === 'A' ? 250 : 181).fill(null) }))
+      if (kdX === 'A') setHdA({ kg: '', km: '', rusak: '' })
+      else setHdB({ kg: '', km: '', rusak: '' })
+      alert(`✅ Panen Kandang ${kdX} disimpan!\n${totBtrKd} butir | ${kgV} kg | HDP ${f1(hdp)}%${rusakV > 0 ? `\nTelur rusak: ${rusakV} butir` : ''}`)
     } catch (err) {
       alert('Gagal simpan panen: ' + err.message)
     }
   }
+
+  // ── SIMPAN KONSUMSI PAKAN ──
+  async function simpanPakan() {
+    const pkA = (parseFloat(hd.pakanAPagi)||0) + (parseFloat(hd.pakanASore)||0)
+    const pkB = (parseFloat(hd.pakanBPagi)||0) + (parseFloat(hd.pakanBSore)||0)
+    if (pkA <= 0 && pkB <= 0) { alert('Isi minimal satu field konsumsi pakan!'); return }
+    if (pkA > cfg.pakan_a) { alert(`Pakan A melebihi stok (${f1(cfg.pakan_a)} kg)!`); return }
+    if (pkB > cfg.pakan_b) { alert(`Pakan B melebihi stok (${f1(cfg.pakan_b)} kg)!`); return }
+
+    const newPakanA = Math.max(0, cfg.pakan_a - pkA)
+    const newPakanB = Math.max(0, cfg.pakan_b - pkB)
+    try {
+      if (pkA > 0) await saveCfg('pakan_a', newPakanA)
+      if (pkB > 0) await saveCfg('pakan_b', newPakanB)
+      setCfg(prev => ({ ...prev, pakan_a: newPakanA, pakan_b: newPakanB }))
+      setHd({ kg: '', km: '', rusak: '', pakanAPagi: '', pakanASore: '', pakanBPagi: '', pakanBSore: '' })
+      alert(`✅ Konsumsi pakan disimpan!\nA: ${f1(pkA)} kg | B: ${f1(pkB)} kg`)
+    } catch (err) {
+      alert('Gagal simpan pakan: ' + err.message)
+    }
+  }
+
+  // ── SIMPAN PANEN (legacy, kept for compatibility) ──
+  async function simpanPanen() { await simpanPanenKandang(kd) }
+
 
   // ── PROSES JUAL ──
   async function prosesJual() {
@@ -822,92 +836,137 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
     </>
   )
 
-  const renderInput = () => (
-    <>
-      <div style={{ ...S.card, display: 'flex', padding: 3, marginBottom: 7 }}>
-        {['A', 'B'].map(k => (
-          <button key={k} onClick={() => { setKd(k); setFocR(0) }}
-            style={{ flex: 1, padding: 9, borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: kd === k ? (k === 'A' ? '#15803d' : '#0284c7') : 'transparent', color: kd === k ? '#fff' : '#6b7280', fontFamily: 'inherit' }}>
-            Kandang {k} ({k === 'A' ? cfg.pop_a : cfg.pop_b} ekor)
-          </button>
-        ))}
-      </div>
-
-      <div style={{ ...S.stat, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
-        <div>
-          <div style={{ fontSize: 10, color: '#6b7280' }}>HDP Live — Kandang {kd}</div>
-          <div style={{ fontSize: 20, fontWeight: 600, color: hdpLive >= 78 ? '#15803d' : '#d97706' }}>{f1(hdpLive)}%</div>
-        </div>
-        <div style={{ textAlign: 'right', fontSize: 10, color: '#6b7280' }}>
-          <div>{totBtr} butir | {filledCnt}/{kd === 'A' ? 250 : 181} kamar</div>
-          {matiCnt > 0 && <div style={{ color: '#dc2626' }}>{matiCnt} kamar mati</div>}
-        </div>
-      </div>
-      <div style={{ ...S.bar, height: 6, marginBottom: 8 }}>
-        <div style={{ background: hdpLive >= 78 ? '#15803d' : '#d97706', width: `${Math.min(hdpLive, 100)}%`, height: '100%', borderRadius: 99 }} />
-      </div>
-
-      <div style={{ ...S.card, padding: '9px 7px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <div style={S.sec}>Input per kamar</div>
-          <button style={S.btnSm} onClick={resetRooms}>Reset</button>
-        </div>
-        <div style={S.rg}>
-          {curRooms.map((v, i) => {
-            const iD = v === 'mati', iF = v !== null, iC = focR === i
-            const col = kd === 'A' ? '#15803d' : '#0284c7'
-            return (
-              <div key={i} id={`rm-${i}`} style={{ borderRadius: 8, padding: '7px 6px', border: `1.5px solid ${iC ? col : iD ? '#fca5a5' : iF ? '#86efac' : '#e5e7eb'}`, background: iD ? '#fff1f2' : iF ? '#f0fdf4' : '#fff' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                  <span style={{ fontSize: 9, fontWeight: 600, color: iD ? '#dc2626' : iF ? '#15803d' : '#9ca3af' }}>K-{String(i + 1).padStart(3, '0')} {iD ? 'X' : iF ? '✓' + v : ''}</span>
-                  <button onClick={() => setRoom(kd, i, 'mati')} style={{ background: 'none', border: 'none', fontSize: 8, color: '#dc2626', cursor: 'pointer' }}>Mati</button>
-                </div>
-                <div style={{ display: 'flex', gap: 2 }}>
-                  {[0, 1, 2].map(n => (
-                    <button key={n} onClick={() => setRoom(kd, i, n)}
-                      style={{ flex: 1, border: `1.5px solid ${v === n ? col : '#e5e7eb'}`, borderRadius: 5, padding: '5px 0', fontWeight: 600, fontSize: 12, cursor: 'pointer', background: v === n ? col : 'transparent', color: v === n ? '#fff' : '#111', fontFamily: 'inherit' }}>{n}</button>
-                  ))}
-                  <button onClick={() => setRoom(kd, i, 3)}
-                    style={{ flex: 1, border: `1.5px solid ${v === 3 ? '#d97706' : '#fde68a'}`, borderRadius: 5, padding: '5px 0', fontWeight: 700, fontSize: 12, cursor: 'pointer', background: v === 3 ? '#d97706' : '#fffbeb', color: v === 3 ? '#fff' : '#92400e', fontFamily: 'inherit' }}>3</button>
-                </div>
+  // Helper render grid kamar per kandang
+  const renderRoomGrid = (kdX) => {
+    const col = kdX === 'A' ? '#15803d' : '#0284c7'
+    const roomsKd = rooms[kdX]
+    const maxR = kdX === 'A' ? 250 : 181
+    return (
+      <div style={S.rg}>
+        {roomsKd.map((v, i) => {
+          const iD = v === 'mati', iF = v !== null
+          return (
+            <div key={i} style={{ borderRadius: 8, padding: '7px 6px', border: `1.5px solid ${iD ? '#fca5a5' : iF ? '#86efac' : '#e5e7eb'}`, background: iD ? '#fff1f2' : iF ? '#f0fdf4' : '#fff' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                <span style={{ fontSize: 9, fontWeight: 600, color: iD ? '#dc2626' : iF ? col : '#9ca3af' }}>K-{i+1} {iD ? 'X' : iF ? '✓'+v : ''}</span>
+                <button onClick={() => setRoom(kdX, i, 'mati')} style={{ background: 'none', border: 'none', fontSize: 8, color: '#dc2626', cursor: 'pointer' }}>Mati</button>
               </div>
-            )
-          })}
-        </div>
+              <div style={{ display: 'flex', gap: 2 }}>
+                {[0,1,2].map(n => (
+                  <button key={n} onClick={() => setRoom(kdX, i, n)}
+                    style={{ flex: 1, border: `1.5px solid ${v===n?col:'#e5e7eb'}`, borderRadius: 5, padding: '5px 0', fontWeight: 600, fontSize: 12, cursor: 'pointer', background: v===n?col:'transparent', color: v===n?'#fff':'#111', fontFamily: 'inherit' }}>{n}</button>
+                ))}
+                <button onClick={() => setRoom(kdX, i, 3)}
+                  style={{ flex: 1, border: `1.5px solid ${v===3?'#d97706':'#fde68a'}`, borderRadius: 5, padding: '5px 0', fontWeight: 700, fontSize: 12, cursor: 'pointer', background: v===3?'#d97706':'#fffbeb', color: v===3?'#fff':'#92400e', fontFamily: 'inherit' }}>3</button>
+              </div>
+            </div>
+          )
+        })}
       </div>
+    )
+  }
 
-      <div style={S.card}>
-        <div style={S.sec}>Data panen hari ini</div>
-        <label style={{ ...S.lbl, marginTop: 0 }}>Total berat panen (kg) *</label>
-        <input style={S.inp} type="number" placeholder="Total kg dipanen" value={hd.kg} onChange={e => setHd(p => ({ ...p, kg: e.target.value }))} />
-        <div style={{ fontSize: 9, color: '#0284c7', marginTop: 3, marginBottom: 4 }}>
-          💡 Isi berat telur <strong>yang bagus saja</strong> (sudah dipisah dari yang rusak)
+  const renderInput = () => {
+    const mkSection = (kdX) => {
+      const col = kdX === 'A' ? '#15803d' : '#0284c7'
+      const bg  = kdX === 'A' ? '#f0fdf4' : '#eff6ff'
+      const pop = kdX === 'A' ? cfg.pop_a : cfg.pop_b
+      const fd  = kdX === 'A' ? hdA : hdB
+      const setFd = kdX === 'A' ? setHdA : setHdB
+      const roomsKd = rooms[kdX]
+      const totBtrKd = roomsKd.reduce((a,v) => a+(typeof v==='number'?v:0), 0)
+      const matiKd = roomsKd.filter(v=>v==='mati').length
+      const filledKd = roomsKd.filter(v=>v!==null).length
+      const hdpKd = pop > 0 ? (totBtrKd / pop) * 100 : 0
+
+      return (
+        <div key={kdX} style={{ ...S.card, border: `1.5px solid ${col}33`, marginBottom: 10 }}>
+          {/* Header kandang */}
+          <div style={{ background: col, borderRadius: '8px 8px 0 0', margin: '-12px -14px 10px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>🐔 Kandang {kdX} — {pop} ekor</div>
+            <button onClick={() => { setRooms(prev => ({ ...prev, [kdX]: new Array(kdX==='A'?250:181).fill(null) })) }}
+              style={{ background: 'rgba(255,255,255,.2)', border: 'none', borderRadius: 5, padding: '3px 8px', color: '#fff', fontSize: 10, cursor: 'pointer' }}>Reset</button>
+          </div>
+
+          {/* HDP live */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+            <div>
+              <div style={{ fontSize: 10, color: '#6b7280' }}>HDP Live</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: hdpKd>=78?col:'#d97706' }}>{f1(hdpKd)}%</div>
+            </div>
+            <div style={{ textAlign: 'right', fontSize: 10, color: '#6b7280' }}>
+              <div>{totBtrKd} butir | {filledKd}/{kdX==='A'?250:181} kamar</div>
+              {matiKd > 0 && <div style={{ color: '#dc2626' }}>{matiKd} mati</div>}
+            </div>
+          </div>
+          <div style={{ ...S.bar, height: 5, marginBottom: 10 }}>
+            <div style={{ background: hdpKd>=78?col:'#d97706', width: `${Math.min(hdpKd,100)}%`, height: '100%', borderRadius: 99 }} />
+          </div>
+
+          {/* Grid kamar */}
+          <div style={{ ...S.sec, marginBottom: 6 }}>Input per kamar</div>
+          {renderRoomGrid(kdX)}
+
+          {/* Form data panen */}
+          <div style={{ marginTop: 10 }}>
+            <div style={{ ...S.sec }}>Data panen Kandang {kdX}</div>
+            <label style={{ ...S.lbl, marginTop: 0 }}>Total berat panen (kg) *</label>
+            <input style={S.inp} type="number" placeholder="Total kg dipanen" value={fd.kg}
+              onChange={e => setFd(p => ({ ...p, kg: e.target.value }))} />
+            <div style={{ fontSize: 9, color: '#0284c7', marginTop: 2, marginBottom: 6 }}>
+              💡 Berat telur <strong>yang bagus saja</strong> (sudah dipisah dari yang rusak)
+            </div>
+            <div style={S.g2}>
+              <div>
+                <label style={S.lbl}>Kematian (ekor)</label>
+                <input style={S.inp} type="number" placeholder="Atau tandai di kamar" value={fd.km}
+                  onChange={e => setFd(p => ({ ...p, km: e.target.value }))} />
+              </div>
+              <div>
+                <label style={S.lbl}>🥚 Telur Rusak (butir)</label>
+                <input style={S.inp} type="number" placeholder="0" value={fd.rusak}
+                  onChange={e => setFd(p => ({ ...p, rusak: e.target.value }))} />
+                <div style={{ fontSize: 9, color: '#9ca3af', marginTop: 2 }}>Dicatat, tidak kurangi stok</div>
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div style={{ background: bg, borderRadius: 8, padding: '7px 10px', margin: '8px 0', fontSize: 11 }}>
+              <span style={{ fontWeight: 600, color: col }}>{totBtrKd} butir dari {filledKd} kamar — HDP {f1(hdpKd)}%</span>
+              {(parseInt(fd.rusak)||0)>0 && <span style={{ color: '#d97706', marginLeft: 8 }}>| Rusak: {fd.rusak} butir</span>}
+            </div>
+
+            <button style={{ ...S.btnGrn, background: col, marginTop: 4 }} onClick={() => simpanPanenKandang(kdX)}>
+              💾 Simpan Panen Kandang {kdX}
+            </button>
+          </div>
         </div>
+      )
+    }
 
-        <div style={S.g2}>
-          <div>
-            <label style={S.lbl}>Kematian ayam (ekor)</label>
-            <input style={S.inp} type="number" placeholder="Atau tandai di kamar" value={hd.km} onChange={e => setHd(p => ({ ...p, km: e.target.value }))} />
+    return (
+      <>
+        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Input Harian</div>
+        <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 10 }}>Panen & konsumsi pakan hari ini</div>
+
+        {/* Kandang A */}
+        {mkSection('A')}
+
+        {/* Kandang B */}
+        {mkSection('B')}
+
+        {/* Konsumsi Pakan - terpisah */}
+        <div style={{ ...S.card, border: '1.5px solid #fcd34d' }}>
+          <div style={{ background: '#d97706', borderRadius: '8px 8px 0 0', margin: '-12px -14px 10px', padding: '10px 14px' }}>
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>🌾 Konsumsi Pakan Hari Ini</span>
+            <span style={{ color: '#fef3c7', fontSize: 10, marginLeft: 8 }}>pagi + sore</span>
           </div>
-          <div>
-            <label style={S.lbl}>🥚 Telur Rusak (butir)</label>
-            <input style={S.inp} type="number" placeholder="0" value={hd.rusak} onChange={e => setHd(p => ({ ...p, rusak: e.target.value }))} />
-            <div style={{ fontSize: 9, color: '#9ca3af', marginTop: 2 }}>Dicatat di log, tidak kurangi stok</div>
-          </div>
-        </div>
 
-        <div style={{ height: 1, background: '#f3f4f6', margin: '12px 0' }} />
-
-        <div style={S.pakanBox}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <span style={{ fontSize: 16 }}>🌾</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#92400e' }}>Konsumsi Pakan Hari Ini</span>
-            <span style={{ fontSize: 10, color: '#92400e', background: '#fef3c7', borderRadius: 4, padding: '1px 6px' }}>pagi + sore</span>
-          </div>
-
-          {/* Kandang A */}
+          {/* Kandang A pakan */}
           <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#15803d', marginBottom: 5 }}>Kandang A — Stok: {f1(cfg.pakan_a)} kg</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#15803d', marginBottom: 5 }}>
+              Kandang A — Stok: <strong>{f1(cfg.pakan_a)} kg</strong>
+            </div>
             <div style={S.g2}>
               <div>
                 <label style={{ ...S.lbl, marginTop: 0 }}>🌅 Pagi (kg)</label>
@@ -921,19 +980,17 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
               </div>
             </div>
             {(() => {
-              const total = (parseFloat(hd.pakanAPagi)||0) + (parseFloat(hd.pakanASore)||0)
-              const sisa = cfg.pakan_a - total
-              return total > 0 ? (
-                <div style={{ fontSize: 10, marginTop: 3, color: sisa < 0 ? '#dc2626' : sisa < 50 ? '#d97706' : '#15803d' }}>
-                  Total A: {f1(total)} kg → sisa {f1(Math.max(0, sisa))} kg{sisa < 0 ? ' ⚠ tidak cukup!' : ''}
-                </div>
-              ) : null
+              const t = (parseFloat(hd.pakanAPagi)||0)+(parseFloat(hd.pakanASore)||0)
+              const s = cfg.pakan_a - t
+              return t > 0 ? <div style={{ fontSize: 10, marginTop: 3, color: s<0?'#dc2626':s<50?'#d97706':'#15803d' }}>Total A: {f1(t)} kg → sisa {f1(Math.max(0,s))} kg{s<0?' ⚠ tidak cukup!':''}</div> : null
             })()}
           </div>
 
-          {/* Kandang B */}
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#0284c7', marginBottom: 5 }}>Kandang B — Stok: {f1(cfg.pakan_b)} kg</div>
+          {/* Kandang B pakan */}
+          <div style={{ borderTop: '0.5px solid #fde68a', paddingTop: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#0284c7', marginBottom: 5 }}>
+              Kandang B — Stok: <strong>{f1(cfg.pakan_b)} kg</strong>
+            </div>
             <div style={S.g2}>
               <div>
                 <label style={{ ...S.lbl, marginTop: 0 }}>🌅 Pagi (kg)</label>
@@ -947,39 +1004,33 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
               </div>
             </div>
             {(() => {
-              const total = (parseFloat(hd.pakanBPagi)||0) + (parseFloat(hd.pakanBSore)||0)
-              const sisa = cfg.pakan_b - total
-              return total > 0 ? (
-                <div style={{ fontSize: 10, marginTop: 3, color: sisa < 0 ? '#dc2626' : sisa < 50 ? '#d97706' : '#15803d' }}>
-                  Total B: {f1(total)} kg → sisa {f1(Math.max(0, sisa))} kg{sisa < 0 ? ' ⚠ tidak cukup!' : ''}
-                </div>
-              ) : null
+              const t = (parseFloat(hd.pakanBPagi)||0)+(parseFloat(hd.pakanBSore)||0)
+              const s = cfg.pakan_b - t
+              return t > 0 ? <div style={{ fontSize: 10, marginTop: 3, color: s<0?'#dc2626':s<50?'#d97706':'#15803d' }}>Total B: {f1(t)} kg → sisa {f1(Math.max(0,s))} kg{s<0?' ⚠ tidak cukup!':''}</div> : null
             })()}
           </div>
 
-          {/* Total keseluruhan */}
+          {/* Total pakan */}
           {(() => {
-            const tA = (parseFloat(hd.pakanAPagi)||0) + (parseFloat(hd.pakanASore)||0)
-            const tB = (parseFloat(hd.pakanBPagi)||0) + (parseFloat(hd.pakanBSore)||0)
-            return (tA + tB) > 0 ? (
-              <div style={{ marginTop: 8, padding: '6px 8px', background: '#fffbeb', borderRadius: 8, fontSize: 11, color: '#92400e' }}>
-                Total pakan: <strong>{f1(tA + tB)} kg</strong> (A: {f1(tA)} kg + B: {f1(tB)} kg)
+            const tA = (parseFloat(hd.pakanAPagi)||0)+(parseFloat(hd.pakanASore)||0)
+            const tB = (parseFloat(hd.pakanBPagi)||0)+(parseFloat(hd.pakanBSore)||0)
+            return (tA+tB) > 0 ? (
+              <div style={{ background: '#fffbeb', borderRadius: 8, padding: '6px 8px', marginTop: 8, fontSize: 11, color: '#92400e' }}>
+                Total pakan hari ini: <strong>{f1(tA+tB)} kg</strong> (A: {f1(tA)} kg + B: {f1(tB)} kg)
               </div>
             ) : null
           })()}
-        </div>
 
-        <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '8px 10px', marginBottom: 6, fontSize: 11 }}>
-          <div style={{ fontWeight: 600, color: '#15803d', marginBottom: 2 }}>
-            {totBtr} butir dari {filledCnt} kamar — HDP {f1(hdpLive)}%
-            {(parseInt(hd.rusak)||0) > 0 && <span style={{ color: '#d97706', marginLeft: 8 }}>| Rusak: {hd.rusak} butir</span>}
+          <div style={{ fontSize: 10, color: '#6b7280', marginTop: 8, marginBottom: 4 }}>
+            Pembelian pakan baru? Catat di menu Pengeluaran
           </div>
-          <div style={{ color: '#6b7280' }}>Pembelian pakan baru? Catat di menu Pengeluaran</div>
+          <button style={{ ...S.btnGrn, background: '#d97706', marginTop: 4 }} onClick={simpanPakan}>
+            💾 Simpan Konsumsi Pakan
+          </button>
         </div>
-        <button style={S.btnGrn} onClick={simpanPanen}>💾 Simpan panen & konsumsi pakan</button>
-      </div>
-    </>
-  )
+      </>
+    )
+  }
 
   const renderKasir = () => {
     const prev = (parseFloat(td.kg) || 0) * (parseFloat(td.harga) || 0)
@@ -1339,7 +1390,15 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
           <>
             {/* 1. Tabel harian */}
             <div style={{ ...S.card, overflowX: 'auto' }}>
-              <div style={S.sec}>📋 Tabel produksi harian</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <div style={S.sec}>📋 Tabel produksi harian</div>
+                <div style={{ display: 'flex', gap: 3, background: '#f9fafb', padding: 3, borderRadius: 6 }}>
+                  {[['all','Semua'],['A','Kand A'],['B','Kand B']].map(([k,v]) => (
+                    <button key={k} onClick={() => setTabelKd(k)}
+                      style={{ border: 'none', borderRadius: 5, padding: '4px 8px', fontSize: 9, fontWeight: 600, cursor: 'pointer', background: tabelKd===k?(k==='A'?'#15803d':k==='B'?'#0284c7':'#374151'):'transparent', color: tabelKd===k?'#fff':'#6b7280', fontFamily: 'inherit' }}>{v}</button>
+                  ))}
+                </div>
+              </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, minWidth: 420 }}>
                 <thead><tr>
                   {['Tanggal','Kand','Butir','Layak Jual','Kg','HDP%','Pakan(kg)','Rusak','Mati'].map(h => (
@@ -1347,7 +1406,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
                   ))}
                 </tr></thead>
                 <tbody>
-                  {hlog.map((h, i) => {
+                  {(tabelKd==='all'?hlog:hlog.filter(h=>h.kd===tabelKd)).map((h, i) => {
                     const layakJual = h.tb - (h.rusak||0)
                     return (
                       <tr key={h.id} style={{ background: i%2===0?'#fff':'#f9fafb' }}>
@@ -1371,16 +1430,21 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
                 </tbody>
                 {/* Baris total */}
                 <tfoot>
-                  <tr style={{ background: '#f3f4f6', borderTop: '2px solid #15803d' }}>
-                    <td colSpan={2} style={{ padding: '4px 5px', fontWeight: 700, fontSize: 10 }}>TOTAL</td>
-                    <td style={{ padding: '4px 5px', fontWeight: 700 }}>{hlog.reduce((a,h)=>a+h.tb,0)}</td>
-                    <td style={{ padding: '4px 5px', fontWeight: 700, color: '#15803d' }}>{hlog.reduce((a,h)=>a+(h.tb-(h.rusak||0)),0)}</td>
-                    <td style={{ padding: '4px 5px', fontWeight: 700 }}>{f1(hlog.reduce((a,h)=>a+h.kg,0))}</td>
-                    <td style={{ padding: '4px 5px', fontWeight: 700, color: '#15803d' }}>{hlog.length>0?f1(hlog.reduce((a,h)=>a+h.hdp,0)/hlog.length):0}%</td>
-                    <td style={{ padding: '4px 5px', fontWeight: 700, color: '#d97706' }}>{f1(hlog.reduce((a,h)=>a+(h.pakanA||0)+(h.pakanB||0),0))}</td>
-                    <td style={{ padding: '4px 5px', fontWeight: 700, color: '#d97706' }}>{hlog.reduce((a,h)=>a+(h.rusak||0),0)}</td>
-                    <td style={{ padding: '4px 5px', fontWeight: 700, color: '#dc2626' }}>{hlog.reduce((a,h)=>a+(h.km||0),0)}</td>
-                  </tr>
+                  {(() => {
+                    const flog = tabelKd==='all'?hlog:hlog.filter(h=>h.kd===tabelKd)
+                    return (
+                      <tr style={{ background: '#f3f4f6', borderTop: '2px solid #15803d' }}>
+                        <td colSpan={2} style={{ padding: '4px 5px', fontWeight: 700, fontSize: 10 }}>TOTAL {tabelKd!=='all'?`Kand ${tabelKd}`:''}</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700 }}>{flog.reduce((a,h)=>a+h.tb,0)}</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#15803d' }}>{flog.reduce((a,h)=>a+(h.tb-(h.rusak||0)),0)}</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700 }}>{f1(flog.reduce((a,h)=>a+h.kg,0))}</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#15803d' }}>{flog.length>0?f1(flog.reduce((a,h)=>a+h.hdp,0)/flog.length):0}%</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#d97706' }}>{f1(flog.reduce((a,h)=>a+(h.pakanA||0)+(h.pakanB||0),0))}</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#d97706' }}>{flog.reduce((a,h)=>a+(h.rusak||0),0)}</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#dc2626' }}>{flog.reduce((a,h)=>a+(h.km||0),0)}</td>
+                      </tr>
+                    )
+                  })()}
                 </tfoot>
               </table>
               {/* Keterangan */}
