@@ -880,6 +880,9 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
         <div style={S.sec}>Data panen hari ini</div>
         <label style={{ ...S.lbl, marginTop: 0 }}>Total berat panen (kg) *</label>
         <input style={S.inp} type="number" placeholder="Total kg dipanen" value={hd.kg} onChange={e => setHd(p => ({ ...p, kg: e.target.value }))} />
+        <div style={{ fontSize: 9, color: '#0284c7', marginTop: 3, marginBottom: 4 }}>
+          💡 Isi berat telur <strong>yang bagus saja</strong> (sudah dipisah dari yang rusak)
+        </div>
 
         <div style={S.g2}>
           <div>
@@ -1337,29 +1340,53 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
             {/* 1. Tabel harian */}
             <div style={{ ...S.card, overflowX: 'auto' }}>
               <div style={S.sec}>📋 Tabel produksi harian</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, minWidth: 360 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, minWidth: 420 }}>
                 <thead><tr>
-                  {['Tanggal','Kand','Butir','Kg','HDP%','Pakan(kg)','Rusak','Mati'].map(h => (
+                  {['Tanggal','Kand','Butir','Layak Jual','Kg','HDP%','Pakan(kg)','Rusak','Mati'].map(h => (
                     <th key={h} style={{ background: '#15803d', color: '#fff', padding: '4px 5px', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr></thead>
                 <tbody>
-                  {hlog.map((h, i) => (
-                    <tr key={h.id} style={{ background: i%2===0?'#fff':'#f9fafb' }}>
-                      <td style={{ padding: '4px 5px', whiteSpace: 'nowrap' }}>{h.tgl}</td>
-                      <td style={{ padding: '4px 5px' }}>
-                        <span style={{ background: h.kd==='A'?'#dcfce7':'#dbeafe', color: h.kd==='A'?'#166534':'#1e40af', borderRadius: 3, padding: '1px 5px', fontSize: 9, fontWeight: 600 }}>{h.kd}</span>
-                      </td>
-                      <td style={{ padding: '4px 5px', fontWeight: 600 }}>{h.tb}</td>
-                      <td style={{ padding: '4px 5px' }}>{f1(h.kg)}</td>
-                      <td style={{ padding: '4px 5px', color: h.hdp>=78?'#15803d':'#dc2626', fontWeight: 600 }}>{f1(h.hdp)}%</td>
-                      <td style={{ padding: '4px 5px', color: '#d97706' }}>{f1((h.pakanA||0)+(h.pakanB||0))}</td>
-                      <td style={{ padding: '4px 5px', color: (h.rusak||0)>0?'#d97706':'#9ca3af' }}>{h.rusak||0}</td>
-                      <td style={{ padding: '4px 5px', color: (h.km||0)>0?'#dc2626':'#9ca3af' }}>{h.km||0}</td>
-                    </tr>
-                  ))}
+                  {hlog.map((h, i) => {
+                    const layakJual = h.tb - (h.rusak||0)
+                    return (
+                      <tr key={h.id} style={{ background: i%2===0?'#fff':'#f9fafb' }}>
+                        <td style={{ padding: '4px 5px', whiteSpace: 'nowrap' }}>{h.tgl}</td>
+                        <td style={{ padding: '4px 5px' }}>
+                          <span style={{ background: h.kd==='A'?'#dcfce7':'#dbeafe', color: h.kd==='A'?'#166534':'#1e40af', borderRadius: 3, padding: '1px 5px', fontSize: 9, fontWeight: 600 }}>{h.kd}</span>
+                        </td>
+                        <td style={{ padding: '4px 5px', fontWeight: 600 }}>{h.tb}</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#15803d' }}>
+                          {layakJual}
+                          {(h.rusak||0) > 0 && <span style={{ fontSize: 8, color: '#9ca3af', marginLeft: 2 }}>(-{h.rusak})</span>}
+                        </td>
+                        <td style={{ padding: '4px 5px' }}>{f1(h.kg)}</td>
+                        <td style={{ padding: '4px 5px', color: h.hdp>=78?'#15803d':'#dc2626', fontWeight: 600 }}>{f1(h.hdp)}%</td>
+                        <td style={{ padding: '4px 5px', color: '#d97706' }}>{f1((h.pakanA||0)+(h.pakanB||0))}</td>
+                        <td style={{ padding: '4px 5px', color: (h.rusak||0)>0?'#d97706':'#9ca3af' }}>{h.rusak||0}</td>
+                        <td style={{ padding: '4px 5px', color: (h.km||0)>0?'#dc2626':'#9ca3af' }}>{h.km||0}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
+                {/* Baris total */}
+                <tfoot>
+                  <tr style={{ background: '#f3f4f6', borderTop: '2px solid #15803d' }}>
+                    <td colSpan={2} style={{ padding: '4px 5px', fontWeight: 700, fontSize: 10 }}>TOTAL</td>
+                    <td style={{ padding: '4px 5px', fontWeight: 700 }}>{hlog.reduce((a,h)=>a+h.tb,0)}</td>
+                    <td style={{ padding: '4px 5px', fontWeight: 700, color: '#15803d' }}>{hlog.reduce((a,h)=>a+(h.tb-(h.rusak||0)),0)}</td>
+                    <td style={{ padding: '4px 5px', fontWeight: 700 }}>{f1(hlog.reduce((a,h)=>a+h.kg,0))}</td>
+                    <td style={{ padding: '4px 5px', fontWeight: 700, color: '#15803d' }}>{hlog.length>0?f1(hlog.reduce((a,h)=>a+h.hdp,0)/hlog.length):0}%</td>
+                    <td style={{ padding: '4px 5px', fontWeight: 700, color: '#d97706' }}>{f1(hlog.reduce((a,h)=>a+(h.pakanA||0)+(h.pakanB||0),0))}</td>
+                    <td style={{ padding: '4px 5px', fontWeight: 700, color: '#d97706' }}>{hlog.reduce((a,h)=>a+(h.rusak||0),0)}</td>
+                    <td style={{ padding: '4px 5px', fontWeight: 700, color: '#dc2626' }}>{hlog.reduce((a,h)=>a+(h.km||0),0)}</td>
+                  </tr>
+                </tfoot>
               </table>
+              {/* Keterangan */}
+              <div style={{ fontSize: 9, color: '#6b7280', marginTop: 6, padding: '4px 0' }}>
+                💡 <strong>Layak Jual</strong> = Total Butir − Telur Rusak &nbsp;|&nbsp; <strong>HDP%</strong> = rata-rata semua panen
+              </div>
             </div>
 
             {/* 2. Chart produksi per hari */}
