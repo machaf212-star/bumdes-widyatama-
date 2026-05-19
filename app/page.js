@@ -162,7 +162,12 @@ export default function App() {
         setHlog(panenData.map(p => ({
           id: p.id, tgl: new Date(p.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
           tgl2: p.tanggal, kd: p.kandang, tb: p.total_butir, kg: p.total_kg,
-          hdp: p.hdp, km: p.kematian, pakanA: p.pakan_a || 0, pakanB: p.pakan_b || 0,
+          hdp: p.hdp, km: p.kematian,
+          rusak: p.telur_rusak || 0,
+          pakanA: p.pakan_a || 0, pakanB: p.pakan_b || 0,
+          pakanAPagi: p.pakan_a_pagi || 0, pakanASore: p.pakan_a_sore || 0,
+          pakanBPagi: p.pakan_b_pagi || 0, pakanBSore: p.pakan_b_sore || 0,
+          roomDetail: (() => { try { return p.room_detail ? JSON.parse(p.room_detail) : null } catch(e) { return null } })(),
           by: p.dicatat_oleh,
         })))
       }
