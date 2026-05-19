@@ -837,6 +837,35 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
     </>
   )
 
+  // ── HELPER RENDER GRID KAMAR ──
+  const renderRoomGrid = (kdX) => {
+    const col = kdX === 'A' ? '#15803d' : '#0284c7'
+    const roomsKd = rooms[kdX]
+    return (
+      <div style={S.rg}>
+        {roomsKd.map((v, i) => {
+          const iD = v === 'mati', iF = v !== null
+          return (
+            <div key={i} style={{ borderRadius:8, padding:'7px 6px', border:`1.5px solid ${iD?'#fca5a5':iF?'#86efac':'#e5e7eb'}`, background:iD?'#fff1f2':iF?'#f0fdf4':'#fff' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:3 }}>
+                <span style={{ fontSize:9, fontWeight:600, color:iD?'#dc2626':iF?col:'#9ca3af' }}>K-{i+1} {iD?'X':iF?'✓'+v:''}</span>
+                <button onClick={() => setRoom(kdX, i, 'mati')} style={{ background:'none', border:'none', fontSize:8, color:'#dc2626', cursor:'pointer' }}>Mati</button>
+              </div>
+              <div style={{ display:'flex', gap:2 }}>
+                {[0,1,2].map(n => (
+                  <button key={n} onClick={() => setRoom(kdX, i, n)}
+                    style={{ flex:1, border:`1.5px solid ${v===n?col:'#e5e7eb'}`, borderRadius:5, padding:'5px 0', fontWeight:600, fontSize:12, cursor:'pointer', background:v===n?col:'transparent', color:v===n?'#fff':'#111', fontFamily:'inherit' }}>{n}</button>
+                ))}
+                <button onClick={() => setRoom(kdX, i, 3)}
+                  style={{ flex:1, border:`1.5px solid ${v===3?'#d97706':'#fde68a'}`, borderRadius:5, padding:'5px 0', fontWeight:700, fontSize:12, cursor:'pointer', background:v===3?'#d97706':'#fffbeb', color:v===3?'#fff':'#92400e', fontFamily:'inherit' }}>3</button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   const renderInput = () => {
     const mkKandang = (kdX) => {
       const col   = kdX === 'A' ? '#15803d' : '#0284c7'
