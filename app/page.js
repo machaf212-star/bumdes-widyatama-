@@ -87,20 +87,21 @@ export default function App() {
   })
 
   // ── DATA LOGS ──
-  const [users,     setUsers]     = useState([])
-  const [hlog,      setHlog]      = useState([])
-  const [slog,      setSlog]      = useState([])
-  const [elog,      setElog]      = useState([])
-  const [piutang,   setPiutang]   = useState([])
-  const [pelanggan, setPelanggan] = useState([])  // daftar pelanggan langganan
+  const [users,       setUsers]       = useState([])
+  const [hlog,        setHlog]        = useState([])
+  const [slog,        setSlog]        = useState([])
+  const [elog,        setElog]        = useState([])
+  const [piutang,     setPiutang]     = useState([])
+  const [pelanggan,   setPelanggan]   = useState([])
+  const [pakanHarian, setPakanHarian] = useState([]) // log pakan harian pagi/sore
 
   // ── FORM DRAFTS ──
-  const [hdA, setHdA] = useState({ kg: '', km: '', rusak: '' })  // form kandang A
-  const [hdB, setHdB] = useState({ kg: '', km: '', rusak: '' })  // form kandang B
-  const [hd, setHd] = useState({ kg: '', km: '', rusak: '', pakanAPagi: '', pakanASore: '', pakanBPagi: '', pakanBSore: '' })
-  const [td, setTd] = useState({ kg: '', harga: '25000', nama: '', alamat: '', hp: '', metode: 'tunai', bank: '', norek: '', tempo: '' })
-  const [ed, setEd] = useState({ kat: 'pakan', tgl: tod(), jml: '', ket: '', qty: '', kdPakan: 'A' })
-  const [nu, setNu] = useState({ nama: '', username: '', password: '', role: 'abk' })
+  const [hdA, setHdA] = useState({ kg: '', km: '', rusak: '' })
+  const [hdB, setHdB] = useState({ kg: '', km: '', rusak: '' })
+  const [hd,  setHd]  = useState({ pakanAPagi: '', pakanASore: '', pakanBPagi: '', pakanBSore: '' })
+  const [td,  setTd]  = useState({ kg: '', harga: '25000', nama: '', alamat: '', hp: '', metode: 'tunai', bank: '', norek: '', tempo: '' })
+  const [ed,  setEd]  = useState({ kat: 'pakan', tgl: tod(), jml: '', ket: '', qty: '', kdPakan: 'A' })
+  const [nu,  setNu]  = useState({ nama: '', username: '', password: '', role: 'abk' })
 
   // ── UI STATE ──
   const [notif,       setNotif]       = useState(null)
@@ -205,6 +206,10 @@ export default function App() {
       // Pelanggan langganan
       const { data: plgData } = await supabase.from('pelanggan').select('*').order('nama')
       if (plgData) setPelanggan(plgData)
+
+      // Pakan harian
+      const { data: pakanData } = await supabase.from('pakan_harian').select('*').order('created_at', { ascending: false })
+      if (pakanData) setPakanHarian(pakanData)
     } catch (err) {
       notify('Gagal memuat data. Cek koneksi internet.', true)
     }
@@ -487,14 +492,33 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
     const newStokBtr = cfg.stok_butir + totBtrKd
     const roomDetail = JSON.stringify(roomsKd)
 
+    // ── Ambil data pakan hari ini dari pakan_harian ──
+    const pakanHari = pakanHarian.filter(p => p.tanggal === tod())
+    const pakanPagi = pakanHari.find(p => p.sesi === 'pagi')
+    const pakanSore = pakanHari.find(p => p.sesi === 'sore')
+
+    const pakanField = kdX === 'A' ? 'kandang_a' : 'kandang_b'
+    const pkPagi = pakanPagi ? (pakanPagi[pakanField] || 0) : 0
+    const pkSore = pakanSore ? (pakanSore[pakanField] || 0) : 0
+    const pkTotal = pkPagi + pkSore
+
+    const pakanInfo = pkTotal > 0
+      ? `\nPakan ${kdX}: ${f1(pkTotal)} kg (pagi ${f1(pkPagi)} + sore ${f1(pkSore)})`
+      : '\n⚠ Pakan belum diinput hari ini'
+
     try {
-      const { error } = await supabase.from('panen').insert({
+      const { data: insertedPanen, error } = await supabase.from('panen').insert({
         kandang: kdX, total_butir: totBtrKd, total_kg: kgV, hdp,
-        kematian: kmV, pakan_a: 0, pakan_b: 0,
-        pakan_a_pagi: 0, pakan_a_sore: 0, pakan_b_pagi: 0, pakan_b_sore: 0,
+        kematian: kmV,
+        pakan_a: kdX === 'A' ? pkTotal : 0,
+        pakan_b: kdX === 'B' ? pkTotal : 0,
+        pakan_a_pagi: kdX === 'A' ? pkPagi : 0,
+        pakan_a_sore: kdX === 'A' ? pkSore : 0,
+        pakan_b_pagi: kdX === 'B' ? pkPagi : 0,
+        pakan_b_sore: kdX === 'B' ? pkSore : 0,
         telur_rusak: rusakV, room_detail: roomDetail,
         dicatat_oleh: user.nama, tanggal: tod(),
-      })
+      }).select().single()
       if (error) throw error
 
       await saveCfg(popKey, newPop)
@@ -504,14 +528,20 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
 
       const tgl = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
       setHlog(prev => [{
-        id: Date.now(), tgl, tgl2: tod(), kd: kdX, tb: totBtrKd, kg: kgV, hdp,
-        km: kmV, rusak: rusakV, pakanA: 0, pakanB: 0,
+        id: insertedPanen.id, tgl, tgl2: tod(), kd: kdX,
+        tb: totBtrKd, kg: kgV, hdp, km: kmV, rusak: rusakV,
+        pakanA: kdX === 'A' ? pkTotal : 0,
+        pakanB: kdX === 'B' ? pkTotal : 0,
+        pakanAPagi: kdX === 'A' ? pkPagi : 0,
+        pakanASore: kdX === 'A' ? pkSore : 0,
+        pakanBPagi: kdX === 'B' ? pkPagi : 0,
+        pakanBSore: kdX === 'B' ? pkSore : 0,
         roomDetail: roomsKd.slice(), by: user.nama,
       }, ...prev])
       setRooms(prev => ({ ...prev, [kdX]: new Array(kdX === 'A' ? 250 : 181).fill(null) }))
       if (kdX === 'A') setHdA({ kg: '', km: '', rusak: '' })
       else setHdB({ kg: '', km: '', rusak: '' })
-      alert(`✅ Panen Kandang ${kdX} disimpan!\n${totBtrKd} butir | ${kgV} kg | HDP ${f1(hdp)}%${rusakV > 0 ? `\nTelur rusak: ${rusakV} butir` : ''}`)
+      alert(`✅ Panen Kandang ${kdX} disimpan!\n${totBtrKd} butir | ${kgV} kg | HDP ${f1(hdp)}%${rusakV > 0 ? `\nTelur rusak: ${rusakV} butir` : ''}${pakanInfo}`)
     } catch (err) {
       alert('Gagal simpan panen: ' + err.message)
     }
@@ -519,20 +549,66 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
 
   // ── SIMPAN KONSUMSI PAKAN ──
   async function simpanPakan() {
-    const pkA = (parseFloat(hd.pakanAPagi)||0) + (parseFloat(hd.pakanASore)||0)
-    const pkB = (parseFloat(hd.pakanBPagi)||0) + (parseFloat(hd.pakanBSore)||0)
+    const pkA     = (parseFloat(hd.pakanAPagi)||0) + (parseFloat(hd.pakanASore)||0)
+    const pkB     = (parseFloat(hd.pakanBPagi)||0) + (parseFloat(hd.pakanBSore)||0)
+    const pkAPagi = parseFloat(hd.pakanAPagi)||0
+    const pkASore = parseFloat(hd.pakanASore)||0
+    const pkBPagi = parseFloat(hd.pakanBPagi)||0
+    const pkBSore = parseFloat(hd.pakanBSore)||0
+
     if (pkA <= 0 && pkB <= 0) { alert('Isi minimal satu field konsumsi pakan!'); return }
     if (pkA > cfg.pakan_a) { alert(`Pakan A melebihi stok (${f1(cfg.pakan_a)} kg)!`); return }
     if (pkB > cfg.pakan_b) { alert(`Pakan B melebihi stok (${f1(cfg.pakan_b)} kg)!`); return }
 
     const newPakanA = Math.max(0, cfg.pakan_a - pkA)
     const newPakanB = Math.max(0, cfg.pakan_b - pkB)
+    const today = tod()
+
     try {
+      // 1. Update stok pakan di config
       if (pkA > 0) await saveCfg('pakan_a', newPakanA)
       if (pkB > 0) await saveCfg('pakan_b', newPakanB)
       setCfg(prev => ({ ...prev, pakan_a: newPakanA, pakan_b: newPakanB }))
+
+      // 2. Update log panen hari ini dengan data pakan
+      // Kandang A — cari panen hari ini
+      if (pkA > 0) {
+        const { data: panenA } = await supabase
+          .from('panen').select('id').eq('tanggal', today).eq('kandang', 'A')
+          .order('created_at', { ascending: false }).limit(1)
+        if (panenA && panenA.length > 0) {
+          await supabase.from('panen').update({
+            pakan_a: pkA, pakan_a_pagi: pkAPagi, pakan_a_sore: pkASore
+          }).eq('id', panenA[0].id)
+          // Update local state
+          setHlog(prev => prev.map(h =>
+            h.tgl2 === today && h.kd === 'A'
+              ? { ...h, pakanA: pkA, pakanAPagi: pkAPagi, pakanASore: pkASore }
+              : h
+          ))
+        }
+      }
+
+      // Kandang B — cari panen hari ini
+      if (pkB > 0) {
+        const { data: panenB } = await supabase
+          .from('panen').select('id').eq('tanggal', today).eq('kandang', 'B')
+          .order('created_at', { ascending: false }).limit(1)
+        if (panenB && panenB.length > 0) {
+          await supabase.from('panen').update({
+            pakan_b: pkB, pakan_b_pagi: pkBPagi, pakan_b_sore: pkBSore
+          }).eq('id', panenB[0].id)
+          // Update local state
+          setHlog(prev => prev.map(h =>
+            h.tgl2 === today && h.kd === 'B'
+              ? { ...h, pakanB: pkB, pakanBPagi: pkBPagi, pakanBSore: pkBSore }
+              : h
+          ))
+        }
+      }
+
       setHd({ kg: '', km: '', rusak: '', pakanAPagi: '', pakanASore: '', pakanBPagi: '', pakanBSore: '' })
-      alert(`✅ Konsumsi pakan disimpan!\nA: ${f1(pkA)} kg | B: ${f1(pkB)} kg`)
+      alert(`✅ Konsumsi pakan disimpan & dicatat ke log panen!\nA: ${f1(pkA)} kg (pagi ${f1(pkAPagi)}+sore ${f1(pkASore)})\nB: ${f1(pkB)} kg (pagi ${f1(pkBPagi)}+sore ${f1(pkBSore)})`)
     } catch (err) {
       alert('Gagal simpan pakan: ' + err.message)
     }
@@ -965,66 +1041,89 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
       )
     }
 
-    const tA = (parseFloat(hd.pakanAPagi)||0)+(parseFloat(hd.pakanASore)||0)
-    const tB = (parseFloat(hd.pakanBPagi)||0)+(parseFloat(hd.pakanBSore)||0)
+    const mkPakan = () => {
+      const pakanHari = pakanHarian.filter(p => p.tanggal === tod())
+      const sudahPagi = pakanHari.find(p => p.sesi === 'pagi')
+      const sudahSore = pakanHari.find(p => p.sesi === 'sore')
+      const tA = (parseFloat(hd.pakanAPagi)||0)+(parseFloat(hd.pakanASore)||0)
+      const tB = (parseFloat(hd.pakanBPagi)||0)+(parseFloat(hd.pakanBSore)||0)
+      return (
+        <div style={S.card}>
+          <div style={S.sec}>Konsumsi pakan hari ini</div>
 
-    const mkPakan = () => (
-      <div style={S.card}>
-        <div style={S.sec}>Konsumsi pakan hari ini</div>
+          {/* Status hari ini */}
+          <div style={{ display:'flex', gap:6, marginBottom:10 }}>
+            <div style={{ flex:1, background: sudahPagi?'#f0fdf4':'#fff1f2', border:`1px solid ${sudahPagi?'#bbf7d0':'#fecaca'}`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
+              <div style={{ fontSize:9, color:'#6b7280' }}>Pakan Pagi</div>
+              {sudahPagi
+                ? <div style={{ fontSize:11, fontWeight:600, color:'#15803d' }}>✅ A:{f1(sudahPagi.kandang_a)}kg B:{f1(sudahPagi.kandang_b)}kg</div>
+                : <div style={{ fontSize:11, color:'#dc2626' }}>Belum diinput</div>}
+            </div>
+            <div style={{ flex:1, background: sudahSore?'#f0fdf4':'#fff1f2', border:`1px solid ${sudahSore?'#bbf7d0':'#fecaca'}`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
+              <div style={{ fontSize:9, color:'#6b7280' }}>Pakan Sore</div>
+              {sudahSore
+                ? <div style={{ fontSize:11, fontWeight:600, color:'#15803d' }}>✅ A:{f1(sudahSore.kandang_a)}kg B:{f1(sudahSore.kandang_b)}kg</div>
+                : <div style={{ fontSize:11, color:'#dc2626' }}>Belum diinput</div>}
+            </div>
+          </div>
 
-        {/* Kandang A */}
-        <div style={{ marginBottom:10 }}>
-          <div style={{ fontSize:11, fontWeight:600, color:'#15803d', marginBottom:5 }}>
-            Kandang A — Stok: <strong>{f1(cfg.pakan_a)} kg</strong>
-          </div>
-          <div style={S.g2}>
-            <div>
-              <label style={{ ...S.lbl, marginTop:0 }}>🌅 Pagi (kg)</label>
-              <input style={S.inp} type="number" placeholder="0" value={hd.pakanAPagi}
-                onChange={e => setHd(p => ({ ...p, pakanAPagi: e.target.value }))} />
+          {/* Form pagi */}
+          <div style={{ background:'#fffbeb', borderRadius:8, padding:'10px 12px', marginBottom:8, border:'1px solid #fde68a' }}>
+            <div style={{ fontSize:11, fontWeight:600, color:'#92400e', marginBottom:6 }}>🌅 Pakan Pagi</div>
+            <div style={S.g2}>
+              <div>
+                <label style={{ ...S.lbl, marginTop:0 }}>Kandang A (kg)</label>
+                <input style={S.inp} type="number" placeholder="0" value={hd.pakanAPagi}
+                  onChange={e => setHd(p => ({ ...p, pakanAPagi: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ ...S.lbl, marginTop:0 }}>Kandang B (kg)</label>
+                <input style={S.inp} type="number" placeholder="0" value={hd.pakanBPagi}
+                  onChange={e => setHd(p => ({ ...p, pakanBPagi: e.target.value }))} />
+              </div>
             </div>
-            <div>
-              <label style={{ ...S.lbl, marginTop:0 }}>🌆 Sore (kg)</label>
-              <input style={S.inp} type="number" placeholder="0" value={hd.pakanASore}
-                onChange={e => setHd(p => ({ ...p, pakanASore: e.target.value }))} />
+            <button style={{ ...S.btnGrn, background:'#d97706', marginTop:8 }}
+              onClick={() => simpanPakanSesi('pagi')}>
+              💾 Simpan Pakan Pagi
+            </button>
+          </div>
+
+          {/* Form sore */}
+          <div style={{ background:'#fff7ed', borderRadius:8, padding:'10px 12px', marginBottom:8, border:'1px solid #fed7aa' }}>
+            <div style={{ fontSize:11, fontWeight:600, color:'#9a3412', marginBottom:6 }}>🌆 Pakan Sore</div>
+            <div style={S.g2}>
+              <div>
+                <label style={{ ...S.lbl, marginTop:0 }}>Kandang A (kg)</label>
+                <input style={S.inp} type="number" placeholder="0" value={hd.pakanASore}
+                  onChange={e => setHd(p => ({ ...p, pakanASore: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ ...S.lbl, marginTop:0 }}>Kandang B (kg)</label>
+                <input style={S.inp} type="number" placeholder="0" value={hd.pakanBSore}
+                  onChange={e => setHd(p => ({ ...p, pakanBSore: e.target.value }))} />
+              </div>
+            </div>
+            <button style={{ ...S.btnGrn, background:'#ea580c', marginTop:8 }}
+              onClick={() => simpanPakanSesi('sore')}>
+              💾 Simpan Pakan Sore
+            </button>
+          </div>
+
+          {/* Info stok */}
+          <div style={{ display:'flex', gap:6, fontSize:10 }}>
+            <div style={{ flex:1, background:'#f0fdf4', borderRadius:6, padding:'5px 8px' }}>
+              <div style={{ color:'#6b7280' }}>Stok Pakan A</div>
+              <div style={{ fontWeight:600, color:'#15803d' }}>{f1(cfg.pakan_a)} kg</div>
+            </div>
+            <div style={{ flex:1, background:'#eff6ff', borderRadius:6, padding:'5px 8px' }}>
+              <div style={{ color:'#6b7280' }}>Stok Pakan B</div>
+              <div style={{ fontWeight:600, color:'#0284c7' }}>{f1(cfg.pakan_b)} kg</div>
             </div>
           </div>
-          {tA > 0 && <div style={{ fontSize:10, marginTop:3, color:(cfg.pakan_a-tA)<0?'#dc2626':(cfg.pakan_a-tA)<50?'#d97706':'#15803d' }}>
-            Total A: {f1(tA)} kg → sisa {f1(Math.max(0,cfg.pakan_a-tA))} kg{(cfg.pakan_a-tA)<0?' ⚠ tidak cukup!':''}
-          </div>}
+          <div style={{ fontSize:10, color:'#6b7280', marginTop:6 }}>Pembelian pakan baru? Catat di menu Pengeluaran</div>
         </div>
-
-        {/* Kandang B */}
-        <div style={{ borderTop:'0.5px solid #fde68a', paddingTop:10, marginBottom:8 }}>
-          <div style={{ fontSize:11, fontWeight:600, color:'#0284c7', marginBottom:5 }}>
-            Kandang B — Stok: <strong>{f1(cfg.pakan_b)} kg</strong>
-          </div>
-          <div style={S.g2}>
-            <div>
-              <label style={{ ...S.lbl, marginTop:0 }}>🌅 Pagi (kg)</label>
-              <input style={S.inp} type="number" placeholder="0" value={hd.pakanBPagi}
-                onChange={e => setHd(p => ({ ...p, pakanBPagi: e.target.value }))} />
-            </div>
-            <div>
-              <label style={{ ...S.lbl, marginTop:0 }}>🌆 Sore (kg)</label>
-              <input style={S.inp} type="number" placeholder="0" value={hd.pakanBSore}
-                onChange={e => setHd(p => ({ ...p, pakanBSore: e.target.value }))} />
-            </div>
-          </div>
-          {tB > 0 && <div style={{ fontSize:10, marginTop:3, color:(cfg.pakan_b-tB)<0?'#dc2626':(cfg.pakan_b-tB)<50?'#d97706':'#15803d' }}>
-            Total B: {f1(tB)} kg → sisa {f1(Math.max(0,cfg.pakan_b-tB))} kg{(cfg.pakan_b-tB)<0?' ⚠ tidak cukup!':''}
-          </div>}
-        </div>
-
-        {(tA+tB) > 0 && (
-          <div style={{ background:'#fffbeb', borderRadius:8, padding:'6px 8px', marginBottom:8, fontSize:11, color:'#92400e' }}>
-            Total: <strong>{f1(tA+tB)} kg</strong> (A: {f1(tA)} kg + B: {f1(tB)} kg)
-          </div>
-        )}
-        <div style={{ fontSize:10, color:'#6b7280', marginBottom:6 }}>Pembelian pakan baru? Catat di menu Pengeluaran</div>
-        <button style={{ ...S.btnGrn, background:'#d97706' }} onClick={simpanPakan}>💾 Simpan Konsumsi Pakan</button>
-      </div>
-    )
+      )
+    }
 
     return (
       <>
