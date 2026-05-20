@@ -492,19 +492,25 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
     const newStokBtr = cfg.stok_butir + totBtrKd
     const roomDetail = JSON.stringify(roomsKd)
 
-    // ── Ambil data pakan hari ini dari pakan_harian ──
-    const pakanHari = pakanHarian.filter(p => p.tanggal === tod())
-    const pakanPagi = pakanHari.find(p => p.sesi === 'pagi')
-    const pakanSore = pakanHari.find(p => p.sesi === 'sore')
+    // ── Ambil data pakan hari ini LANGSUNG dari Supabase (paling akurat) ──
+    const { data: pakanHariIni } = await supabase
+      .from('pakan_harian')
+      .select('*')
+      .eq('tanggal', tod())
 
     const pakanField = kdX === 'A' ? 'kandang_a' : 'kandang_b'
+    const pakanPagi = pakanHariIni?.find(p => p.sesi === 'pagi')
+    const pakanSore = pakanHariIni?.find(p => p.sesi === 'sore')
     const pkPagi = pakanPagi ? (pakanPagi[pakanField] || 0) : 0
     const pkSore = pakanSore ? (pakanSore[pakanField] || 0) : 0
     const pkTotal = pkPagi + pkSore
 
+    // Update local pakanHarian state juga
+    if (pakanHariIni) setPakanHarian(pakanHariIni)
+
     const pakanInfo = pkTotal > 0
       ? `\nPakan ${kdX}: ${f1(pkTotal)} kg (pagi ${f1(pkPagi)} + sore ${f1(pkSore)})`
-      : '\n⚠ Pakan belum diinput hari ini'
+      : '\n⚠ Pakan belum diinput — input pakan di tab Pakan'
 
     try {
       const { data: insertedPanen, error } = await supabase.from('panen').insert({
@@ -1745,10 +1751,39 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
                     <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 4 }}>{log.tgl}</div>
                     {log.roomDetail && (
                       <button onClick={() => setRekapPopup(log)}
-                        style={{ background: '#f0fdf4', border: '0.5px solid #bbf7d0', borderRadius: 6, padding: '4px 8px', fontSize: 9, fontWeight: 600, color: '#15803d', cursor: 'pointer' }}>
+                        style={{ background: '#f0fdf4', border: '0.5px solid #bbf7d0', borderRadius: 6, padding: '4px 8px', fontSize: 9, fontWeight: 600, color: '#15803d', cursor: 'pointer', display: 'block', marginBottom: 4 }}>
                         📊 Rekap Kamar
                       </button>
                     )}
+                    {/* Tombol update pakan untuk koreksi data */}
+                    <button onClick={async () => {
+                      const { data: ph } = await supabase.from('pakan_harian').select('*').eq('tanggal', log.tgl2)
+                      const field = log.kd === 'A' ? 'kandang_a' : 'kandang_b'
+                      const pagi = ph?.find(p => p.sesi === 'pagi')
+                      const sore = ph?.find(p => p.sesi === 'sore')
+                      const pkP = pagi ? (pagi[field]||0) : 0
+                      const pkS = sore ? (sore[field]||0) : 0
+                      const total = pkP + pkS
+                      if (total === 0) { alert('Tidak ada data pakan untuk tanggal ini.'); return }
+                      const pakanKey = log.kd === 'A' ? 'pakan_a' : 'pakan_b'
+                      const pakanPagiKey = log.kd === 'A' ? 'pakan_a_pagi' : 'pakan_b_pagi'
+                      const pakanSoreKey = log.kd === 'A' ? 'pakan_a_sore' : 'pakan_b_sore'
+                      await supabase.from('panen').update({
+                        [pakanKey]: total,
+                        [pakanPagiKey]: pkP,
+                        [pakanSoreKey]: pkS,
+                      }).eq('id', log.id)
+                      setHlog(prev => prev.map(h => h.id === log.id
+                        ? { ...h,
+                            pakanA: log.kd === 'A' ? total : h.pakanA,
+                            pakanB: log.kd === 'B' ? total : h.pakanB }
+                        : h
+                      ))
+                      alert(`✅ Pakan diupdate!\nKandang ${log.kd}: ${f1(total)} kg\n(pagi ${f1(pkP)} + sore ${f1(pkS)})`)
+                    }}
+                      style={{ background: '#fffbeb', border: '0.5px solid #fcd34d', borderRadius: 6, padding: '4px 8px', fontSize: 9, fontWeight: 600, color: '#92400e', cursor: 'pointer' }}>
+                      🌾 Update Pakan
+                    </button>
                   </div>
                 </div>
               </div>
