@@ -1088,7 +1088,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               <div style={S.bar}><div style={{ background: c, width: `${Math.round(p / cap * 100)}%`, height: '100%', borderRadius: 99 }} /></div>
               <div style={{ marginTop: 5, background: pk < 50 ? '#fff1f2' : '#eff6ff', borderRadius: 8, padding: '5px 8px' }}>
                 <div style={{ fontSize: 9, color: '#6b7280' }}>Stok Pakan</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: pk < 50 ? '#dc2626' : c }}>{f1(pk)} kg{pk < 50 ? ' ⚠' : ''}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: pk < 50 ? '#dc2626' : c }}>{f1(pk)} kg {pk < 50 ? '(menipis!)' : ''}</div>
               </div>
             </div>
           ))}
@@ -1370,7 +1370,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               BEP = {rp(biayaTetap)} ÷ ({rp(hargaJual)} - {rp(bvPerKg)}) = <strong>{f1(bepKg)} kg</strong>
             </div>
             <div style={{marginTop:4,color: totalProdKg>=bepKg?'#1e3a5f':'#dc2626',fontWeight:600}}>
-              Status: Produksi {f1(totalProdKg)} kg {totalProdKg>=bepKg?'≥':'<'} BEP {f1(bepKg)} kg → {totalProdKg>=bepKg?'✅ Di atas BEP':'⚠ Belum mencapai BEP'}
+              Status: Produksi {f1(totalProdKg)} kg {totalProdKg>=bepKg?'≥':'<'} BEP {f1(bepKg)} kg — {totalProdKg>=bepKg?'Di atas BEP':'Belum mencapai BEP'}
             </div>
           </div>
         </div>
@@ -1689,7 +1689,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             <>
               <label style={{ ...S.lbl, marginTop: 0 }}>Tanggal Jatuh Tempo *</label>
               <input style={{ ...S.inp, marginBottom: 8 }} type="date" value={td.tempo} onChange={e => setTd(p => ({ ...p, tempo: e.target.value }))} />
-              <div style={{ background: '#fefce8', borderRadius: 8, padding: '7px 10px', fontSize: 10, color: '#854d0e', marginBottom: 8 }}>⚠ Stok & pendapatan belum berubah hingga dilunasi</div>
+              <div style={{ background: '#fef2f2', borderRadius: 8, padding: '7px 10px', fontSize: 10, color: '#dc2626', marginBottom: 8, display:'flex', alignItems:'center', gap:5 }}><i className="ti ti-alert-circle" style={{fontSize:12}}/>Stok & pendapatan belum berubah hingga dilunasi</div>
             </>
           )}
           {td.metode === 'qris' && (
