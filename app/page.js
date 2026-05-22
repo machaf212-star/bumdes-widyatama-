@@ -648,7 +648,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
     const pakanInfo = pkTotal > 0
       ? `\nPakan ${kdX}: ${f1(pkTotal)} kg (pagi ${f1(pkPagi)} + sore ${f1(pkSore)})`
-      : '\n⚠ Pakan belum diinput — input pakan di tab Pakan'
+      : '\nPakan belum diinput hari ini'
 
     try {
       const { data: insertedPanen, error } = await supabase.from('panen').insert({
@@ -1226,7 +1226,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         const W = 320, H = 70, pad = 8, bw = (W-pad*2)/12/2-1
         return (
           <div style={S.card}>
-            <div style={S.sec}>📊 Pendapatan vs Pengeluaran per bulan</div>
+            <div style={S.sec}>Pendapatan vs Pengeluaran per bulan</div>
             <svg viewBox={`0 0 ${W} ${H+20}`} style={{width:'100%'}}>
               {rows.map((r,i) => {
                 const x = pad + i*(W-pad*2)/12
@@ -1349,7 +1349,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
         {/* BEP */}
         <div style={S.card}>
-          <div style={S.sec}>📊 Break Even Point (BEP)</div>
+          <div style={S.sec}>Break Even Point (BEP)</div>
           <div style={S.g2}>
             <div style={{...S.stat,borderTop:'2px solid #7c3aed'}}>
               <div style={{fontSize:10,color:'#6b7280'}}>BEP Volume</div>
@@ -1377,7 +1377,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
         {/* Efisiensi Pakan */}
         <div style={S.card}>
-          <div style={S.sec}>🌾 Efisiensi Biaya Pakan</div>
+          <div style={S.sec}>Efisiensi Biaya Pakan</div>
           <div style={S.g2}>
             <div style={{...S.stat,borderTop:'2px solid #f59e0b'}}>
               <div style={{fontSize:10,color:'#6b7280'}}>Biaya Pakan</div>
@@ -2080,7 +2080,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             {/* 2. Chart produksi per hari */}
             {chartData.length > 0 && (
               <div style={S.card}>
-                <div style={S.sec}>📈 Grafik produksi harian (30 panen terakhir)</div>
+                <div style={S.sec}>Grafik produksi harian (30 panen terakhir)</div>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 80, overflowX: 'auto', paddingBottom: 4 }}>
                   {chartData.map((h, i) => {
                     const pct = h.tb / maxBtr
@@ -2161,7 +2161,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                           ))}
                         </div>
                         <div>
-                          <div style={{ fontSize: 10, fontWeight: 600, color: '#dc2626', marginBottom: 5 }}>⚠ Perlu perhatian (sering 0)</div>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: '#dc2626', marginBottom: 5 }}><i className="ti ti-alert-triangle" style={{fontSize:11,marginRight:3,color:'#dc2626'}}/> Perlu perhatian (sering 0)</div>
                           {sorted0.map(x => (
                             <div key={x.i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, padding: '3px 0', borderBottom: '0.5px solid #f8fafc' }}>
                               <span>K-{x.i+1}</span>
@@ -2188,7 +2188,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                     <span style={{ ...S.tag, background: log.kd === 'A' ? '#dbeafe' : '#dbeafe', color: log.kd === 'A' ? '#0369a1' : '#0369a1', marginLeft: 4 }}>{log.kd}</span>
                     <div style={{ fontSize: 11, marginTop: 3 }}>{log.tb} butir · {f1(log.kg)} kg</div>
                     <div style={{ fontSize: 10, color: log.hdp >= 78 ? '#1e3a5f' : '#dc2626' }}>HDP {f1(log.hdp)}%</div>
-                    {(log.pakanA || 0) > 0 || (log.pakanB || 0) > 0 ? <div style={{ fontSize: 10, color: '#f59e0b' }}>🌾 Pakan A:{f1(log.pakanA || 0)}kg B:{f1(log.pakanB || 0)}kg</div> : null}
+                    {(log.pakanA || 0) > 0 || (log.pakanB || 0) > 0 ? <div style={{ fontSize: 10, color: '#0f766e' }}>Pakan A:{f1(log.pakanA || 0)}kg B:{f1(log.pakanB || 0)}kg</div> : null}
                     {log.km > 0 && <div style={{ fontSize: 10, color: '#dc2626' }}>Kematian: {log.km} ekor</div>}
                     {(log.rusak || 0) > 0 && <div style={{ fontSize: 10, color: '#f59e0b' }}>Telur rusak: {log.rusak} butir</div>}
                     <div style={{ fontSize: 10, color: '#9ca3af' }}>{log.by}</div>
@@ -2611,7 +2611,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={doCopy}
               style={{ flex: 1, background: copied ? '#1e3a5f' : '#eff6ff', color: copied ? '#fff' : '#1e3a5f', border: `1px solid ${copied?'#1e3a5f':'#bfdbfe'}`, borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              {copied ? '<i className="ti ti-check" style={{fontSize:14,marginRight:6}}/> Tersalin!' : '<i className="ti ti-copy" style={{fontSize:14,marginRight:6}}/> Copy Teks'}
+              {copied ? <><i className="ti ti-check" style={{fontSize:14,marginRight:6}}/> Tersalin!</> : <><i className="ti ti-copy" style={{fontSize:14,marginRight:6}}/> Copy Teks</>}
             </button>
             <button onClick={bukaWA}
               style={{ flex: 1, background: '#0369a1', color: '#fff', border: 'none', borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
