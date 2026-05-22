@@ -356,7 +356,7 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty}kg Kand.
     const teks = `*${cfg.nama_bumdes}*\n${cfg.desa}, ${cfg.kecamatan}\n\n` +
       `🧾 *KWITANSI PENGELUARAN*\n` +
       `No. : ${exp.no}\nTgl : ${exp.tgl}\n` +
-      `Kategori: ${ki.ic} ${ki.label}\n` +
+      `Kategori: ${ki.label}\n` +
       `Keterangan: ${exp.ket}\n` +
       (exp.qty > 0 ? `Qty Pakan: ${exp.qty} kg (Kandang ${exp.kdPakan})\n` : '') +
       `━━━━━━━━━━━━━━━━━━\n` +
@@ -1115,7 +1115,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         <div style={S.g3}>
           {KATS.map(k => (
             <div key={k.id} style={{ ...S.stat, borderTop: `2px solid ${k.c}` }}>
-              <div style={{ fontSize: 13 }}>{k.ic}</div>
+              <i className={`ti ${k.ic}`} style={{fontSize:16,color:k.c}} aria-hidden="true"/>
               <div style={{ fontSize: 9, color: '#6b7280', marginTop: 2 }}>{k.label}</div>
               <div style={{ fontSize: 11, fontWeight: 600, color: k.c }}>{rp(ec[k.id])}</div>
             </div>
@@ -1790,7 +1790,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         <div style={S.g3}>
           {KATS.map(k => (
             <div key={k.id} style={{ ...S.stat, borderTop: `2px solid ${k.c}` }}>
-              <div style={{ fontSize: 13 }}>{k.ic}</div>
+              <i className={`ti ${k.ic}`} style={{fontSize:16,color:k.c}} aria-hidden="true"/>
               <div style={{ fontSize: 9, color: '#6b7280', marginTop: 2 }}>{k.label}</div>
               <div style={{ fontSize: 11, fontWeight: 600, color: k.c }}>{rp(ec[k.id])}</div>
             </div>
@@ -1805,7 +1805,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         <div style={S.sec}>Tambah pengeluaran</div>
         <label style={{ ...S.lbl, marginTop: 0 }}>Kategori</label>
         <select style={{ ...S.sel, marginBottom: 8 }} value={ed.kat} onChange={e => setEd(p => ({ ...p, kat: e.target.value }))}>
-          {KATS.map(k => <option key={k.id} value={k.id}>{k.ic} {k.label}</option>)}
+          {KATS.map(k => <option key={k.id} value={k.id}>{k.label}</option>)}
         </select>
         <div style={{ ...S.g2, marginBottom: 8 }}>
           <div><label style={{ ...S.lbl, marginTop: 0 }}>Tanggal</label><input style={S.inp} type="date" value={ed.tgl} onChange={e => setEd(p => ({ ...p, tgl: e.target.value }))} /></div>
@@ -1843,7 +1843,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             return (
               <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '0.5px solid #f8fafc' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 7, background: ki.c + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>{ki.ic}</div>
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: ki.c + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className={`ti ${ki.ic}`} style={{fontSize:15,color:ki.c}} aria-hidden="true"/></div>
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600 }}>{ki.label}</div>
                     <div style={{ fontSize: 10, color: '#9ca3af' }}>{e.tgl} · {e.ket}{e.qty > 0 ? ` · +${e.qty}kg Kand.${e.kdPakan}` : ''}</div>
@@ -1923,7 +1923,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             <tbody>
               {KATS.map((k, i) => (
                 <tr key={k.id} style={{ background: i % 2 === 0 ? '#fff' : '#f8fafc' }}>
-                  <td style={{ padding: '5px 6px' }}>{k.ic} {k.label}</td>
+                  <td style={{ padding: '5px 6px' }}><i className={`ti ${k.ic}`} style={{fontSize:12,color:k.c,marginRight:4}} aria-hidden="true"/>{k.label}</td>
                   <td style={{ padding: '5px 6px', color: k.c, fontWeight: 600 }}>{ecMap[k.id] ? rp(ecMap[k.id]) : '-'}</td>
                   <td style={{ padding: '5px 6px' }}>{totalExpense > 0 ? f1((ecMap[k.id] || 0) / totalExpense * 100) + '%' : '0%'}</td>
                 </tr>
@@ -2261,7 +2261,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               <div key={log.id} style={{ ...S.card, padding: '9px 12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 26, height: 26, borderRadius: 6, background: ki.c + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>{ki.ic}</div>
+                    <div style={{ width: 26, height: 26, borderRadius: 6, background: ki.c + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className={`ti ${ki.ic}`} style={{fontSize:14,color:ki.c}} aria-hidden="true"/></div>
                     <div>
                       <span style={{ ...S.tag, background: '#fff1f2', color: '#dc2626' }}>Keluar</span>
                       <div style={{ fontSize: 11, marginTop: 2 }}>{ki.label} · {log.ket}</div>
