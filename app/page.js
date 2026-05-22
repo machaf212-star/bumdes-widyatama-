@@ -8,12 +8,12 @@ const ROLES = {
   abk:   { label: 'ABK',   c: '#1e3a5f', bg: '#dbeafe', tabs: ['dash','input','kasir','keluar','hist'] },
 }
 const KATS = [
-  { id: 'pakan',  label: 'Pakan',        ic: '🌾', c: '#1e3a5f' },
-  { id: 'obat',   label: 'Obat/Vaksin',  ic: '💊', c: '#dc2626' },
-  { id: 'listrik',label: 'Listrik/Air',  ic: '⚡', c: '#f59e0b' },
-  { id: 'gaji',   label: 'Gaji',         ic: '👤', c: '#0ea5e9' },
-  { id: 'pemel',  label: 'Pemeliharaan', ic: '🔧', c: '#7c3aed' },
-  { id: 'lain',   label: 'Lain-lain',    ic: '📦', c: '#6b7280' },
+  { id: 'pakan',   label: 'Pakan',        ic: 'ti-wheat',           c: '#1e3a5f' },
+  { id: 'obat',    label: 'Obat/Vaksin',  ic: 'ti-medicine-syrup',  c: '#dc2626' },
+  { id: 'listrik', label: 'Listrik/Air',  ic: 'ti-bolt',            c: '#f59e0b' },
+  { id: 'gaji',    label: 'Gaji',         ic: 'ti-users',           c: '#0ea5e9' },
+  { id: 'pemel',   label: 'Pemeliharaan', ic: 'ti-tool',            c: '#7c3aed' },
+  { id: 'lain',    label: 'Lain-lain',    ic: 'ti-package',         c: '#6b7280' },
 ]
 const SHU = [
   { l: 'Reinvestasi', p: 25, c: '#0369a1' },
@@ -24,10 +24,10 @@ const SHU = [
 ]
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
 const PAY_METHODS = [
-  { id: 'tunai',    label: 'Tunai',    ic: '💵' },
-  { id: 'tempo',    label: 'Tempo',    ic: '🕐' },
-  { id: 'transfer', label: 'Transfer', ic: '🏦' },
-  { id: 'qris',     label: 'QRIS',     ic: '📱' },
+  { id: 'tunai',    label: 'Tunai',    ic: 'ti-cash' },
+  { id: 'tempo',    label: 'Tempo',    ic: 'ti-clock' },
+  { id: 'transfer', label: 'Transfer', ic: 'ti-building-bank' },
+  { id: 'qris',     label: 'QRIS',     ic: 'ti-qrcode' },
 ]
 
 const rp  = n => 'Rp ' + Math.round(n || 0).toLocaleString('id-ID')
@@ -37,27 +37,27 @@ const katOf = id => KATS.find(k => k.id === id) || KATS[0]
 
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 const S = {
-  wrap:    { fontFamily: 'system-ui,sans-serif', background: '#f8fafc', minHeight: '100vh', maxWidth: 430, margin: '0 auto', position: 'relative' },
-  topbar:  { background: '#1e3a5f', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
-  page:    { padding: '10px 12px 74px' },
-  card:    { background: '#fff', borderRadius: 12, border: '0.5px solid #e2e8f0', padding: '12px 14px', marginBottom: 8 },
+  wrap:    { fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif', background: '#f1f5f9', minHeight: '100vh', maxWidth: 430, margin: '0 auto', position: 'relative' },
+  topbar:  { background: 'linear-gradient(135deg,#1e3a5f 0%,#1e3a5f 100%)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10, boxShadow: '0 1px 3px rgba(0,0,0,.15)' },
+  page:    { padding: '12px 14px 80px' },
+  card:    { background: '#fff', borderRadius: 14, border: '0.5px solid #e2e8f0', padding: '14px 16px', marginBottom: 10, boxShadow: '0 1px 3px rgba(0,0,0,.04)' },
   g2:      { display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 },
   g3:      { display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 },
-  stat:    { background: '#f8fafc', borderRadius: 8, padding: '10px 12px' },
-  sec:     { fontSize: 10, fontWeight: 600, color: '#1e3a5f', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 },
-  lbl:     { fontSize: 11, color: '#6b7280', fontWeight: 500, display: 'block', marginBottom: 3, marginTop: 7 },
-  inp:     { width: '100%', borderRadius: 8, border: '0.5px solid #d1d5db', padding: '8px 10px', fontSize: 12, background: '#fff', color: '#111', fontFamily: 'inherit', boxSizing: 'border-box' },
-  sel:     { width: '100%', borderRadius: 8, border: '0.5px solid #d1d5db', padding: '8px 10px', fontSize: 12, background: '#fff', color: '#111', fontFamily: 'inherit', boxSizing: 'border-box' },
-  btnGrn:  { background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', width: '100%', marginTop: 8, fontFamily: 'inherit' },
-  btnSm:   { border: '0.5px solid #d1d5db', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 500, cursor: 'pointer', background: '#f8fafc', color: '#374151', fontFamily: 'inherit' },
-  botnav:  { background: '#fff', borderTop: '0.5px solid #e2e8f0', display: 'flex', position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, zIndex: 10 },
-  nbtn:    (on) => ({ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer', background: 'none', border: 'none', fontSize: 8, padding: '6px 2px', color: on ? '#1e3a5f' : '#6b7280', fontWeight: on ? 600 : 400, fontFamily: 'inherit' }),
-  tag:     { borderRadius: 4, padding: '2px 7px', fontSize: 10, fontWeight: 500, display: 'inline-block' },
-  bar:     { background: '#e2e8f0', borderRadius: 99, height: 5, marginTop: 4 },
-  notif:   (err) => ({ position: 'fixed', top: 62, left: '50%', transform: 'translateX(-50%)', zIndex: 100, borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 600, color: '#fff', background: err ? '#dc2626' : '#1e3a5f', whiteSpace: 'nowrap', maxWidth: '90%' }),
-  loginWrap: { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#f8fafc' },
-  pakanBox:  { background: '#fefce8', border: '1px solid #fde047', borderRadius: 8, padding: '11px 13px', marginBottom: 10 },
-  rg:        { display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 5, maxHeight: 320, overflowY: 'auto' },
+  stat:    { background: '#f8fafc', borderRadius: 10, padding: '11px 13px', border: '0.5px solid #e2e8f0' },
+  sec:     { fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 8 },
+  lbl:     { fontSize: 12, color: '#64748b', fontWeight: 500, display: 'block', marginBottom: 4, marginTop: 8 },
+  inp:     { width: '100%', borderRadius: 10, border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: 13, background: '#fff', color: '#0f172a', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none', transition: 'border-color .15s' },
+  sel:     { width: '100%', borderRadius: 10, border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: 13, background: '#fff', color: '#0f172a', fontFamily: 'inherit', boxSizing: 'border-box' },
+  btnGrn:  { background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', width: '100%', marginTop: 8, fontFamily: 'inherit', letterSpacing: '.01em' },
+  btnSm:   { border: '1px solid #e2e8f0', borderRadius: 8, padding: '5px 12px', fontSize: 11, fontWeight: 500, cursor: 'pointer', background: '#f8fafc', color: '#475569', fontFamily: 'inherit' },
+  botnav:  { background: '#fff', borderTop: '1px solid #e2e8f0', display: 'flex', position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, zIndex: 10, boxShadow: '0 -1px 8px rgba(0,0,0,.06)' },
+  nbtn:    (on) => ({ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer', background: 'none', border: 'none', fontSize: 9, padding: '7px 2px', color: on ? '#1e3a5f' : '#94a3b8', fontWeight: on ? 600 : 400, fontFamily: 'inherit' }),
+  tag:     { borderRadius: 6, padding: '3px 8px', fontSize: 10, fontWeight: 600, display: 'inline-block' },
+  bar:     { background: '#e2e8f0', borderRadius: 99, height: 4, marginTop: 4 },
+  notif:   (err) => ({ position: 'fixed', top: 68, left: '50%', transform: 'translateX(-50%)', zIndex: 100, borderRadius: 10, padding: '10px 18px', fontSize: 12, fontWeight: 600, color: '#fff', background: err ? '#ef4444' : '#1e3a5f', whiteSpace: 'nowrap', maxWidth: '90%', boxShadow: '0 4px 12px rgba(0,0,0,.15)' }),
+  loginWrap: { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#f1f5f9' },
+  pakanBox:  { background: '#fefce8', border: '1px solid #fde047', borderRadius: 10, padding: '12px 14px', marginBottom: 10 },
+  rg:        { display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, maxHeight: 320, overflowY: 'auto' },
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -957,47 +957,70 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
   // ─── LOADING ───────────────────────────────────────────────────────────────
   if (loading) return (
-    <div style={{ ...S.loginWrap, gap: 12 }}>
-      <div style={{ fontSize: 40 }}>🐓</div>
-      <div style={{ fontSize: 16, fontWeight: 600, color: '#1e3a5f' }}>BUMDes Widyatama</div>
-      <div style={{ fontSize: 13, color: '#6b7280' }}>Memuat data...</div>
+    <div style={{ ...S.loginWrap, gap: 8 }}>
+      <div style={{ width: 56, height: 56, borderRadius: 16, background: '#1e3a5f', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
+        <i className="ti ti-egg" style={{ fontSize: 28, color: '#fff' }} aria-hidden="true" />
+      </div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: '#1e3a5f', letterSpacing: '.01em' }}>BUMDes Widyatama</div>
+      <div style={{ fontSize: 12, color: '#94a3b8' }}>Memuat data...</div>
+      <div style={{ width: 32, height: 3, background: '#e2e8f0', borderRadius: 99, marginTop: 8, overflow: 'hidden' }}>
+        <div style={{ width: '60%', height: '100%', background: '#1e3a5f', borderRadius: 99, animation: 'none' }} />
+      </div>
     </div>
   )
 
   // ─── LOGIN ─────────────────────────────────────────────────────────────────
   if (!user) return (
-    <div style={S.loginWrap}>
-      <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <div style={{ width: 58, height: 58, borderRadius: 14, background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', fontSize: 28 }}>🐓</div>
-        <div style={{ fontSize: 18, fontWeight: 600, color: '#1e3a5f' }}>{cfg.nama_bumdes}</div>
-        <div style={{ fontSize: 11, color: '#6b7280' }}>{cfg.desa}, {cfg.kecamatan}</div>
+    <div style={{ ...S.loginWrap, background: '#f1f5f9' }}>
+      {/* Hero section */}
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ width: 68, height: 68, borderRadius: 20, background: '#1e3a5f', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', boxShadow: '0 4px 14px rgba(30,58,95,.25)' }}>
+          <i className="ti ti-egg" style={{ fontSize: 32, color: '#fff' }} aria-hidden="true" />
+        </div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#0f172a', letterSpacing: '.01em' }}>{cfg.nama_bumdes}</div>
+        <div style={{ fontSize: 12, color: '#64748b', marginTop: 3 }}>{cfg.desa}, {cfg.kecamatan}</div>
+        <div style={{ display: 'inline-block', background: '#dbeafe', color: '#1e40af', borderRadius: 6, padding: '3px 10px', fontSize: 10, fontWeight: 600, marginTop: 8, letterSpacing: '.03em' }}>SISTEM MANAJEMEN PETERNAKAN</div>
       </div>
-      <div style={{ ...S.card, width: '100%', maxWidth: 310 }}>
-        <div style={S.sec}>Masuk ke aplikasi</div>
+
+      {/* Login card */}
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px 20px', width: '100%', maxWidth: 320, boxShadow: '0 4px 20px rgba(0,0,0,.06)' }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Masuk</div>
+        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 18 }}>Silahkan masuk dengan akun Anda</div>
+
         <label style={{ ...S.lbl, marginTop: 0 }}>Username</label>
-        <input style={S.inp} type="text" placeholder="Masukkan username" value={loginForm.u}
+        <input style={{ ...S.inp, marginBottom: 4 }} type="text" placeholder="Masukkan username" value={loginForm.u}
           onChange={e => setLoginForm(p => ({ ...p, u: e.target.value }))}
           onKeyDown={e => e.key === 'Enter' && doLogin()} />
         <label style={S.lbl}>Password</label>
         <input style={S.inp} type="password" placeholder="Masukkan password" value={loginForm.p}
           onChange={e => setLoginForm(p => ({ ...p, p: e.target.value }))}
           onKeyDown={e => e.key === 'Enter' && doLogin()} />
-        {loginErr && <div style={{ background: '#fff1f2', borderRadius: 7, padding: '7px 10px', fontSize: 11, color: '#dc2626', marginTop: 7, textAlign: 'center' }}>{loginErr}</div>}
-        <button style={S.btnGrn} onClick={doLogin}>Masuk</button>
+        {loginErr && (
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', fontSize: 11, color: '#dc2626', marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <i className="ti ti-alert-circle" style={{ fontSize: 14 }} aria-hidden="true" /> {loginErr}
+          </div>
+        )}
+        <button style={{ ...S.btnGrn, marginTop: 16, borderRadius: 10, padding: '12px', fontSize: 14 }} onClick={doLogin}>
+          Masuk ke Aplikasi
+        </button>
+      </div>
+
+      <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 20, textAlign: 'center' }}>
+        {cfg.desa} · {cfg.kecamatan} · {cfg.kabupaten}
       </div>
     </div>
   )
 
   const role = ROLES[user.role]
   const tabDef = [
-    { k: 'dash',     i: '📊', l: 'Dashboard' },
-    { k: 'input',    i: '🥚', l: 'Input' },
-    { k: 'kasir',    i: '🧾', l: 'Kasir' },
-    { k: 'keluar',   i: '💸', l: 'Pengeluaran' },
-    { k: 'laporan',  i: '📋', l: 'Laporan' },
-    { k: 'analisis', i: '📈', l: 'Analisis' },
-    { k: 'hist',     i: '🕐', l: 'Riwayat' },
-    { k: 'setting',  i: '⚙️', l: 'Pengaturan' },
+    { k: 'dash',     i: '📊', icon: 'ti-layout-dashboard', l: 'Dashboard' },
+    { k: 'input',    i: '🥚', icon: 'ti-egg',              l: 'Input' },
+    { k: 'kasir',    i: '🧾', icon: 'ti-receipt',          l: 'Kasir' },
+    { k: 'keluar',   i: '💸', icon: 'ti-cash',             l: 'Keluar' },
+    { k: 'laporan',  i: '📋', icon: 'ti-report-analytics', l: 'Laporan' },
+    { k: 'analisis', i: '📈', icon: 'ti-chart-line',       l: 'Analisis' },
+    { k: 'hist',     i: '🕐', icon: 'ti-clock-hour-3',     l: 'Riwayat' },
+    { k: 'setting',  i: '⚙️', icon: 'ti-settings',         l: 'Pengaturan' },
   ].filter(t => canDo(t.k))
 
   const ec = ecByCat()
@@ -1650,7 +1673,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             {PAY_METHODS.map(p => (
               <button key={p.id} onClick={() => setTd(prev => ({ ...prev, metode: p.id }))}
                 style={{ flex: 1, border: `1.5px solid ${td.metode === p.id ? '#1e3a5f' : '#e2e8f0'}`, borderRadius: 8, padding: '8px 4px', fontSize: 11, fontWeight: 600, cursor: 'pointer', background: td.metode === p.id ? '#eff6ff' : '#fff', color: td.metode === p.id ? '#1e3a5f' : '#374151', textAlign: 'center', fontFamily: 'inherit' }}>
-                <div style={{ fontSize: 16, marginBottom: 2 }}>{p.ic}</div>
+                <i className={`ti ${p.ic}`} style={{fontSize:20,display:"block",marginBottom:3}} aria-hidden="true"/>
                 <span style={{ fontSize: 9 }}>{p.label}</span>
               </button>
             ))}
@@ -1738,7 +1761,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                     <div style={{ fontSize: 10, color: '#6b7280' }}>{t.nama} · {t.kg} kg</div>
                     <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
                       <span style={{ ...S.tag, background: t.lunas === false ? '#fefce8' : '#eff6ff', color: t.lunas === false ? '#854d0e' : '#0369a1' }}>{t.lunas === false ? 'Tempo' : 'Lunas'}</span>
-                      {pm && <span style={{ ...S.tag, background: '#f8fafc', color: '#6b7280' }}>{pm.ic} {pm.label}</span>}
+                      {pm && <span style={{ ...S.tag, background: '#f8fafc', color: '#6b7280' }}><><i className={`ti ${pm.ic}`} style={{fontSize:11,marginRight:3}} aria-hidden="true"/>{pm.label}</></span>}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -2221,7 +2244,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                       {log.lunas === false && <span style={{ ...S.tag, background: '#fefce8', color: '#854d0e', marginLeft: 4 }}>Tempo</span>}
                       <div style={{ fontSize: 11, fontWeight: 600, marginTop: 3 }}>{log.no}</div>
                       <div style={{ fontSize: 11 }}>{log.nama} · {log.kg} kg</div>
-                      {pm && <div style={{ fontSize: 10, color: '#9ca3af' }}>{pm.ic} {pm.label}</div>}
+                      {pm && <div style={{ fontSize: 10, color: '#9ca3af' }}><><i className={`ti ${pm.ic}`} style={{fontSize:11,marginRight:3}} aria-hidden="true"/>{pm.label}</></div>}
                       <div style={{ fontSize: 10, color: '#9ca3af' }}>{log.by}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -2723,16 +2746,21 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
       <ReceiptModal />
 
       <div style={S.topbar}>
-        <div>
-          <div style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>{cfg.nama_bumdes}</div>
-          <div style={{ color: '#bfdbfe', fontSize: 9 }}>{user.nama} · <span style={{ background: 'rgba(255,255,255,.18)', padding: '1px 5px', borderRadius: 3 }}>{role.label}</span></div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ color: '#bfdbfe', fontSize: 9 }}>Saldo kas</div>
-            <div style={{ color: '#fff', fontWeight: 600, fontSize: 12 }}>{rp(cfg.modal_awal + totalIncome - totalExpense)}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(255,255,255,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid rgba(255,255,255,.2)' }}>
+            <i className="ti ti-egg" style={{ fontSize: 18, color: '#fff' }} aria-hidden="true" />
           </div>
-          <button onClick={doLogout} style={{ background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 6, padding: '4px 8px', color: '#fff', fontSize: 9, cursor: 'pointer' }}>Keluar</button>
+          <div>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 13, letterSpacing: '.01em' }}>{cfg.nama_bumdes}</div>
+            <div style={{ color: 'rgba(255,255,255,.55)', fontSize: 9, marginTop: 1 }}>{user.nama} · <span style={{ background: 'rgba(255,255,255,.15)', padding: '1px 6px', borderRadius: 4, fontSize: 9 }}>{role.label}</span></div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ color: 'rgba(255,255,255,.55)', fontSize: 9 }}>Saldo kas</div>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{rp(cfg.modal_awal + totalIncome - totalExpense)}</div>
+          </div>
+          <button onClick={doLogout} style={{ background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.2)', borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 10, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Keluar</button>
         </div>
       </div>
 
@@ -2750,7 +2778,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
       <nav style={S.botnav}>
         {tabDef.map(t => (
           <button key={t.k} style={S.nbtn(tab === t.k)} onClick={() => go(t.k)}>
-            <span style={{ fontSize: 17 }}>{t.i}</span>{t.l}
+            <i className={`ti ${t.icon}`} style={{ fontSize: 20, marginBottom: 1 }} aria-hidden="true" />
+            {t.l}
           </button>
         ))}
       </nav>
