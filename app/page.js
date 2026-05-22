@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const ROLES = {
-  admin: { label: 'Admin', c: '#7c3aed', bg: '#ede9fe', tabs: ['dash','input','kasir','keluar','laporan','hist','setting'] },
+  admin: { label: 'Admin', c: '#7c3aed', bg: '#ede9fe', tabs: ['dash','input','kasir','keluar','laporan','analisis','hist','setting'] },
   abk:   { label: 'ABK',   c: '#15803d', bg: '#dcfce7', tabs: ['dash','input','kasir','keluar','hist'] },
 }
 const KATS = [
@@ -83,7 +83,16 @@ export default function App() {
     pop_a: 500, pop_b: 362,
     pakan_a: 200, pakan_b: 150,
     kas: 5000000, stok_kg: 0, stok_butir: 0,
-    modal_awal: 0,  // modal/saldo awal sebelum aplikasi dipakai
+    modal_awal: 0,
+    // Data laporan pertanggungjawaban
+    dana_desa: 0,          // dana desa yang diterima
+    target_produksi_kg: 0, // target produksi kg/tahun
+    target_hdp: 78,        // target HDP %
+    nama_direktur: '',     // nama direktur BUMDes
+    nama_bendahara: '',    // nama bendahara BUMDes
+    nama_kades: '',        // nama kepala desa
+    no_perdes: '',         // nomor perdes modal BUMDes
+    tahun_laporan: new Date().getFullYear(),
   })
 
   // ── DATA LOGS ──
@@ -152,6 +161,14 @@ export default function App() {
           stok_kg:     parseFloat(cfgMap.stok_kg) || 0,
           stok_butir:  parseInt(cfgMap.stok_butir) || 0,
           modal_awal:  parseFloat(cfgMap.modal_awal) || 0,
+          dana_desa:   parseFloat(cfgMap.dana_desa) || 0,
+          target_produksi_kg: parseFloat(cfgMap.target_produksi_kg) || 0,
+          target_hdp:  parseFloat(cfgMap.target_hdp) || 78,
+          nama_direktur: cfgMap.nama_direktur || '',
+          nama_bendahara: cfgMap.nama_bendahara || '',
+          nama_kades:  cfgMap.nama_kades || '',
+          no_perdes:   cfgMap.no_perdes || '',
+          tahun_laporan: parseInt(cfgMap.tahun_laporan) || new Date().getFullYear(),
         }))
       }
 
@@ -348,81 +365,202 @@ ${exp.qty > 0 ? `<div class="row"><span>Qty Pakan</span><span>${exp.qty}kg Kand.
     setWaPopup({ teks, hp: '', judul: 'Kwitansi Pengeluaran' })
   }
 
-  // ── PRINT LAPORAN ──
+  // ── PRINT LAPORAN (Format Kepmendesa No.3/2025) ──
   function printLaporan() {
     const rows = monthlyRows()
     const tot = rows.reduce((a,r) => ({kg:a.kg+r.kg,btr:a.btr+r.btr,inc:a.inc+r.inc,exp:a.exp+r.exp,mati:a.mati+r.mati}),{kg:0,btr:0,inc:0,exp:0,mati:0})
     const ec = ecByCat()
     const lb = totalIncome - totalExpense
+    const hpp = tot.kg > 0 ? totalExpense/tot.kg : 0
+    const hargaJualAvg = slog.length > 0 ? slog.reduce((a,t)=>a+t.harga,0)/slog.length : 0
+    const thn = cfg.tahun_laporan || new Date().getFullYear()
+    const namaDir = cfg.nama_direktur || '.............................'
+    const namaBend = cfg.nama_bendahara || '.............................'
+    const namaKades = cfg.nama_kades || '.............................'
+    const noPerdes = cfg.no_perdes || '..../....'
+    const danaDesa = cfg.dana_desa || 0
+    const targetKg = cfg.target_produksi_kg || 0
+    const pctCapai = targetKg > 0 ? f1(tot.kg/targetKg*100) : '-'
+
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Laporan ${cfg.nama_bumdes} 2026</title>
+<title>LPJ ${cfg.nama_bumdes} ${thn}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;font-size:10px;padding:15px;color:#111}
-h1{font-size:14px;color:#15803d;margin-bottom:2px}
-h2{font-size:12px;margin:10px 0 4px;color:#15803d}
-.sub{font-size:9px;color:#6b7280;margin-bottom:8px}
-table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:9px}
-th{background:#15803d;color:#fff;padding:4px 5px;text-align:left;white-space:nowrap}
-td{padding:4px 5px;border-bottom:0.5px solid #e5e7eb}
-tr:nth-child(even) td{background:#f9fafb}
-.tot td{background:#f3f4f6;font-weight:700;border-top:1.5px solid #15803d}
-.ttl{display:flex;justify-content:space-between;align-items:center}
-@media print{body{padding:5mm}.no-print{display:none}}
+body{font-family:'Times New Roman',serif;font-size:11px;padding:20mm 25mm;color:#000;line-height:1.6}
+h1{font-size:14px;text-align:center;font-weight:bold;margin-bottom:4px;text-transform:uppercase}
+h2{font-size:12px;font-weight:bold;margin:16px 0 6px;text-decoration:underline}
+h3{font-size:11px;font-weight:bold;margin:10px 0 4px}
+p{margin-bottom:6px;text-align:justify}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:10px}
+th{border:1px solid #000;padding:4px 6px;background:#e8f5e9;text-align:center;font-weight:bold}
+td{border:1px solid #000;padding:3px 6px}
+.tot td{background:#f5f5f5;font-weight:bold}
+.c{text-align:center}.r{text-align:right}
+.kop{text-align:center;border-bottom:3px double #000;padding-bottom:8px;margin-bottom:12px}
+.kop-nama{font-size:16px;font-weight:bold;text-transform:uppercase}
+.kop-sub{font-size:11px}
+.sign-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:30px}
+.sign-box{text-align:center}
+.sign-line{border-top:1px solid #000;margin-top:50px;padding-top:4px;font-weight:bold}
+.no-print{background:#15803d;color:#fff;padding:8px;text-align:center;margin-bottom:12px;cursor:pointer;font-family:Arial}
+ol{padding-left:20px;margin-bottom:6px}
+li{margin-bottom:2px}
+@media print{.no-print{display:none}body{padding:15mm 20mm}}
 </style></head><body>
-<div class="no-print" style="background:#15803d;color:#fff;padding:10px;text-align:center;margin-bottom:12px;border-radius:6px;cursor:pointer" onclick="window.print()">
-  🖨 Klik di sini untuk Print / Simpan sebagai PDF
-</div>
-<div class="ttl"><div>
-<h1>${cfg.nama_bumdes}</h1>
-<div class="sub">${cfg.desa}, ${cfg.kecamatan}, ${cfg.kabupaten}</div>
-<div class="sub">Laporan Pertanggungjawaban Tahun 2026</div>
-</div><div style="text-align:right;font-size:9px;color:#6b7280">Dicetak: ${new Date().toLocaleString('id-ID')}</div></div>
 
-<h2>Ringkasan Per Bulan</h2>
-<table><thead><tr>
-<th>Bulan</th><th>Prod(kg)</th><th>Butir</th><th>Pendapatan(Rp)</th><th>Pengeluaran(Rp)</th><th>Laba(Rp)</th><th>Pakan A(kg)</th><th>Pakan B(kg)</th><th>HDP A</th><th>HDP B</th><th>Kematian</th>
-</tr></thead><tbody>
+<div class="no-print" onclick="window.print()">🖨 Klik untuk Print / Simpan PDF</div>
+
+<!-- KOP SURAT -->
+<div class="kop">
+<div class="kop-nama">${cfg.nama_bumdes}</div>
+<div class="kop-sub">${cfg.desa}, ${cfg.kecamatan}, ${cfg.kabupaten}</div>
+<div class="kop-sub">Program Ketahanan Pangan — Budidaya Ayam Petelur</div>
+</div>
+
+<h1>LAPORAN PERTANGGUNGJAWABAN<br>PENGELOLAAN DANA KETAHANAN PANGAN</h1>
+<div class="c" style="margin-bottom:16px">Tahun Anggaran ${thn}</div>
+
+<!-- BAB I -->
+<h2>BAB I. PENDAHULUAN</h2>
+<h3>A. Latar Belakang</h3>
+<p>${cfg.nama_bumdes} merupakan Badan Usaha Milik Desa yang bergerak di bidang peternakan ayam petelur sebagai implementasi program ketahanan pangan sesuai Keputusan Menteri Desa dan Pembangunan Daerah Tertinggal Nomor 3 Tahun 2025 tentang Panduan Penggunaan Dana Desa untuk Ketahanan Pangan dalam Mendukung Swasembada Pangan.</p>
+<p>Laporan ini disusun sebagai bentuk pertanggungjawaban pengelolaan dana ketahanan pangan Tahun Anggaran ${thn} kepada Pemerintah ${cfg.desa}.</p>
+
+<h3>B. Dasar Hukum</h3>
+<ol>
+<li>Undang-Undang Nomor 6 Tahun 2014 tentang Desa</li>
+<li>Peraturan Pemerintah Nomor 11 Tahun 2021 tentang Badan Usaha Milik Desa</li>
+<li>Kepmendesa PDT Nomor 3 Tahun 2025 tentang Panduan Penggunaan Dana Desa untuk Ketahanan Pangan</li>
+<li>Peraturan Desa ${cfg.desa} Nomor ${noPerdes} tentang Penyertaan Modal BUMDes</li>
+</ol>
+
+<h3>C. Tujuan</h3>
+<ol>
+<li>Meningkatkan produksi telur lokal untuk memenuhi kebutuhan masyarakat</li>
+<li>Menciptakan lapangan kerja bagi warga ${cfg.desa}</li>
+<li>Meningkatkan Pendapatan Asli Desa (PADes) melalui SHU BUMDes</li>
+<li>Mendukung program swasembada pangan nasional</li>
+</ol>
+
+<!-- BAB II -->
+<h2>BAB II. PROFIL USAHA</h2>
+<table>
+<tr><th style="width:40%">Keterangan</th><th>Data</th></tr>
+<tr><td>Nama BUMDes</td><td>${cfg.nama_bumdes}</td></tr>
+<tr><td>Alamat</td><td>${cfg.desa}, ${cfg.kecamatan}, ${cfg.kabupaten}</td></tr>
+<tr><td>Jenis Usaha</td><td>Budidaya Ayam Petelur</td></tr>
+<tr><td>Direktur</td><td>${namaDir}</td></tr>
+<tr><td>Bendahara</td><td>${namaBend}</td></tr>
+<tr><td>Populasi Kandang A</td><td>${cfg.pop_a} ekor</td></tr>
+<tr><td>Populasi Kandang B</td><td>${cfg.pop_b} ekor</td></tr>
+<tr><td>Total Populasi</td><td>${cfg.pop_a + cfg.pop_b} ekor</td></tr>
+<tr><td>Dana Desa Diterima</td><td>${danaDesa > 0 ? 'Rp '+Math.round(danaDesa).toLocaleString('id-ID') : 'Rp ...................'}</td></tr>
+<tr><td>Modal Awal BUMDes</td><td>Rp ${Math.round(cfg.modal_awal||0).toLocaleString('id-ID')}</td></tr>
+</table>
+
+<!-- BAB III -->
+<h2>BAB III. PELAKSANAAN KEGIATAN</h2>
+<h3>A. Realisasi Produksi Per Bulan</h3>
+<table>
+<tr><th>Bulan</th><th>Prod (kg)</th><th>Prod (butir)</th><th>HDP A (%)</th><th>HDP B (%)</th><th>Pakan A (kg)</th><th>Pakan B (kg)</th><th>Kematian</th></tr>
 ${rows.map((r,i) => {
-  const hA=r.hAn>0?f1(r.hA/r.hAn):'-',hB=r.hBn>0?f1(r.hB/r.hBn):'-',lb2=r.inc-r.exp
-  return `<tr><td>${BULAN[i]}</td><td>${f1(r.kg)}</td><td>${r.btr}</td><td>${Math.round(r.inc).toLocaleString('id-ID')}</td><td>${Math.round(r.exp).toLocaleString('id-ID')}</td><td style="color:${lb2>=0?'#15803d':'#dc2626'}">${Math.round(lb2).toLocaleString('id-ID')}</td><td>${f1(r.pkA)}</td><td>${f1(r.pkB)}</td><td style="color:${parseFloat(hA)>=78?'#15803d':'#dc2626'}">${hA}</td><td style="color:${parseFloat(hB)>=78?'#15803d':'#dc2626'}">${hB}</td><td>${r.mati}</td></tr>`
+  const hA=r.hAn>0?f1(r.hA/r.hAn):'-',hB=r.hBn>0?f1(r.hB/r.hBn):'-'
+  return `<tr><td>${BULAN[i]}</td><td class="r">${f1(r.kg)}</td><td class="r">${r.btr}</td><td class="c">${hA}</td><td class="c">${hB}</td><td class="r">${f1(r.pkA)}</td><td class="r">${f1(r.pkB)}</td><td class="c">${r.mati}</td></tr>`
 }).join('')}
-<tr class="tot"><td>TOTAL</td><td>${f1(tot.kg)}</td><td>${tot.btr}</td><td>${Math.round(tot.inc).toLocaleString('id-ID')}</td><td>${Math.round(tot.exp).toLocaleString('id-ID')}</td><td>${Math.round(tot.inc-tot.exp).toLocaleString('id-ID')}</td><td>—</td><td>—</td><td>—</td><td>—</td><td>${tot.mati}</td></tr>
-</tbody></table>
+<tr class="tot"><td>TOTAL</td><td class="r">${f1(tot.kg)}</td><td class="r">${tot.btr}</td><td class="c">—</td><td class="c">—</td><td class="r">—</td><td class="r">—</td><td class="c">${tot.mati}</td></tr>
+</table>
 
-<h2>Rincian Pengeluaran Per Kategori</h2>
-<table><thead><tr><th>Kategori</th><th>Nominal (Rp)</th><th>% dari Total</th></tr></thead><tbody>
-${KATS.map((k,i) => `<tr><td>${k.label}</td><td>${ec[k.id]?Math.round(ec[k.id]).toLocaleString('id-ID'):'-'}</td><td>${totalExpense>0?f1((ec[k.id]||0)/totalExpense*100)+'%':'0%'}</td></tr>`).join('')}
-<tr class="tot"><td>TOTAL</td><td>${Math.round(totalExpense).toLocaleString('id-ID')}</td><td>100%</td></tr>
-</tbody></table>
+<h3>B. Capaian vs Target</h3>
+<table>
+<tr><th>Indikator</th><th>Target</th><th>Realisasi</th><th>Capaian</th></tr>
+<tr><td>Produksi (kg)</td><td class="r">${targetKg > 0 ? f1(targetKg)+' kg' : 'Belum ditetapkan'}</td><td class="r">${f1(tot.kg)} kg</td><td class="c">${pctCapai !== '-' ? pctCapai+'%' : '-'}</td></tr>
+<tr><td>HDP Kandang A</td><td class="c">${cfg.target_hdp||78}%</td><td class="c">${hdpA>0?f1(hdpA)+'%':'-'}</td><td class="c">${hdpA>0?(hdpA>=(cfg.target_hdp||78)?'✓ Tercapai':'✗ Belum'):'-'}</td></tr>
+<tr><td>HDP Kandang B</td><td class="c">${cfg.target_hdp||78}%</td><td class="c">${hdpB>0?f1(hdpB)+'%':'-'}</td><td class="c">${hdpB>0?(hdpB>=(cfg.target_hdp||78)?'✓ Tercapai':'✗ Belum'):'-'}</td></tr>
+</table>
 
-<h2>Alokasi SHU dari Laba Bersih</h2>
-<table><thead><tr><th>Item SHU</th><th>%</th><th>Nominal (Rp)</th></tr></thead><tbody>
-${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).toLocaleString('id-ID')}</td></tr>`).join('')}
-<tr class="tot"><td>TOTAL</td><td>100%</td><td>${Math.round(lb).toLocaleString('id-ID')}</td></tr>
-</tbody></table>
+<!-- BAB IV -->
+<h2>BAB IV. LAPORAN KEUANGAN</h2>
+<h3>A. Realisasi Pendapatan & Pengeluaran Per Bulan</h3>
+<table>
+<tr><th>Bulan</th><th>Pendapatan (Rp)</th><th>Pengeluaran (Rp)</th><th>Laba/Rugi (Rp)</th></tr>
+${rows.map((r,i) => {
+  const lb2=r.inc-r.exp
+  return `<tr><td>${BULAN[i]}</td><td class="r">${Math.round(r.inc).toLocaleString('id-ID')}</td><td class="r">${Math.round(r.exp).toLocaleString('id-ID')}</td><td class="r" style="color:${lb2>=0?'green':'red'}">${lb2>=0?'':'-'}${Math.abs(Math.round(lb2)).toLocaleString('id-ID')}</td></tr>`
+}).join('')}
+<tr class="tot"><td>TOTAL</td><td class="r">${Math.round(tot.inc).toLocaleString('id-ID')}</td><td class="r">${Math.round(tot.exp).toLocaleString('id-ID')}</td><td class="r">${Math.round(tot.inc-tot.exp).toLocaleString('id-ID')}</td></tr>
+</table>
 
-<div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
-<div style="text-align:center">
-<div style="margin-bottom:40px">Mengetahui,</div>
-<div style="border-top:1px solid #000;padding-top:4px">Kepala Desa ${cfg.desa}</div>
+<h3>B. Rincian Pengeluaran per Kategori</h3>
+<table>
+<tr><th>Kategori</th><th>Nominal (Rp)</th><th>% dari Total</th></tr>
+${KATS.map(k => `<tr><td>${k.label}</td><td class="r">${ec[k.id]?Math.round(ec[k.id]).toLocaleString('id-ID'):'-'}</td><td class="c">${totalExpense>0?f1((ec[k.id]||0)/totalExpense*100)+'%':'0%'}</td></tr>`).join('')}
+<tr class="tot"><td>TOTAL</td><td class="r">${Math.round(totalExpense).toLocaleString('id-ID')}</td><td class="c">100%</td></tr>
+</table>
+
+<h3>C. Ringkasan Keuangan</h3>
+<table>
+<tr><th style="width:60%">Uraian</th><th>Nominal (Rp)</th></tr>
+<tr><td>Modal Awal BUMDes</td><td class="r">${Math.round(cfg.modal_awal||0).toLocaleString('id-ID')}</td></tr>
+${danaDesa>0?`<tr><td>Dana Desa Diterima</td><td class="r">${Math.round(danaDesa).toLocaleString('id-ID')}</td></tr>`:''}
+<tr><td>Total Pendapatan (penjualan telur)</td><td class="r">${Math.round(totalIncome).toLocaleString('id-ID')}</td></tr>
+<tr><td>Total Pengeluaran operasional</td><td class="r">(${Math.round(totalExpense).toLocaleString('id-ID')})</td></tr>
+<tr class="tot"><td>Laba Bersih</td><td class="r">${Math.round(lb).toLocaleString('id-ID')}</td></tr>
+<tr class="tot"><td>Saldo Kas Akhir</td><td class="r">${Math.round((cfg.modal_awal||0)+totalIncome-totalExpense).toLocaleString('id-ID')}</td></tr>
+</table>
+
+<!-- BAB V -->
+<h2>BAB V. ANALISIS KINERJA</h2>
+<table>
+<tr><th style="width:60%">Indikator</th><th>Nilai</th></tr>
+<tr><td>Harga Pokok Produksi (HPP) per kg</td><td class="r">Rp ${Math.round(hpp).toLocaleString('id-ID')}</td></tr>
+<tr><td>Harga Jual rata-rata per kg</td><td class="r">Rp ${Math.round(hargaJualAvg).toLocaleString('id-ID')}</td></tr>
+<tr><td>Margin keuntungan per kg</td><td class="r">Rp ${Math.round(hargaJualAvg-hpp).toLocaleString('id-ID')}</td></tr>
+<tr><td>Total populasi ayam (akhir periode)</td><td class="r">${cfg.pop_a+cfg.pop_b} ekor</td></tr>
+<tr><td>Total kematian selama periode</td><td class="r">${tot.mati} ekor</td></tr>
+<tr><td>Tingkat kematian</td><td class="r">${f1(tot.mati/((500+362)||1)*100)}%</td></tr>
+</table>
+
+<!-- BAB VI -->
+<h2>BAB VI. ALOKASI SHU</h2>
+<table>
+<tr><th>Item SHU</th><th>%</th><th>Nominal (Rp)</th></tr>
+${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Math.round(lb*x.p/100).toLocaleString('id-ID')}</td></tr>`).join('')}
+<tr class="tot"><td>TOTAL</td><td class="c">100%</td><td class="r">${Math.round(lb).toLocaleString('id-ID')}</td></tr>
+</table>
+
+<!-- BAB VII -->
+<h2>BAB VII. PENUTUP</h2>
+<p>Demikian laporan pertanggungjawaban pengelolaan dana ketahanan pangan ${cfg.nama_bumdes} Tahun Anggaran ${thn} ini dibuat dengan sebenar-benarnya. Diharapkan hasil dari pengelolaan ini dapat terus ditingkatkan pada tahun mendatang dengan penguatan kelembagaan, peningkatan kapasitas SDM, serta perluasan jaringan pemasaran.</p>
+<p>Kami mengucapkan terima kasih kepada Pemerintah ${cfg.desa} dan seluruh pihak yang telah mendukung kegiatan usaha ${cfg.nama_bumdes}.</p>
+
+<!-- TANDA TANGAN -->
+<div style="margin-top:30px">
+<div class="c" style="margin-bottom:16px">${cfg.desa}, ${new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})}</div>
+<div class="sign-row">
+<div class="sign-box">
+<div>Mengetahui,</div>
+<div>Kepala ${cfg.desa}</div>
+<div class="sign-line">${namaKades}</div>
 </div>
-<div style="text-align:center">
-<div style="margin-bottom:40px">Dibuat oleh,</div>
-<div style="border-top:1px solid #000;padding-top:4px">Direktur ${cfg.nama_bumdes}</div>
+<div class="sign-box">
+<div>Direktur ${cfg.nama_bumdes}</div>
+<br>
+<div class="sign-line">${namaDir}</div>
+</div>
+<div class="sign-box">
+<div>Bendahara ${cfg.nama_bumdes}</div>
+<br>
+<div class="sign-line">${namaBend}</div>
 </div>
 </div>
+</div>
+
 </body></html>`
-    // Gunakan blob URL agar kompatibel di semua browser & mobile
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url
-    a.target = '_blank'
-    a.rel = 'noopener'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+    a.href = url; a.target = '_blank'; a.rel = 'noopener'
+    document.body.appendChild(a); a.click(); document.body.removeChild(a)
     setTimeout(() => URL.revokeObjectURL(url), 3000)
   }
 
@@ -852,13 +990,14 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
 
   const role = ROLES[user.role]
   const tabDef = [
-    { k: 'dash',    i: '📊', l: 'Dashboard' },
-    { k: 'input',   i: '🥚', l: 'Input' },
-    { k: 'kasir',   i: '🧾', l: 'Kasir' },
-    { k: 'keluar',  i: '💸', l: 'Pengeluaran' },
-    { k: 'laporan', i: '📋', l: 'Laporan' },
-    { k: 'hist',    i: '🕐', l: 'Riwayat' },
-    { k: 'setting', i: '⚙️', l: 'Pengaturan' },
+    { k: 'dash',     i: '📊', l: 'Dashboard' },
+    { k: 'input',    i: '🥚', l: 'Input' },
+    { k: 'kasir',    i: '🧾', l: 'Kasir' },
+    { k: 'keluar',   i: '💸', l: 'Pengeluaran' },
+    { k: 'laporan',  i: '📋', l: 'Laporan' },
+    { k: 'analisis', i: '📈', l: 'Analisis' },
+    { k: 'hist',     i: '🕐', l: 'Riwayat' },
+    { k: 'setting',  i: '⚙️', l: 'Pengaturan' },
   ].filter(t => canDo(t.k))
 
   const ec = ecByCat()
@@ -997,8 +1136,292 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
           )}
         </div>
       </div>
+
+      {/* ── GRAFIK HDP 30 HARI ── */}
+      {hlog.length > 0 && (() => {
+        const data = hlog.slice(0,30).reverse()
+        const maxH = 100
+        const W = 320, H = 80, pad = 24
+        const pts = (kd) => data.filter(h=>h.kd===kd).map((h,i,arr) => {
+          const x = pad + (i/(Math.max(arr.length-1,1)))*(W-pad*2)
+          const y = H - (h.hdp/maxH)*(H-10)
+          return `${x},${y}`
+        }).join(' ')
+        const ptsA = data.filter(h=>h.kd==='A')
+        const ptsB = data.filter(h=>h.kd==='B')
+        return (
+          <div style={S.card}>
+            <div style={S.sec}>📈 Grafik HDP 30 panen terakhir</div>
+            <svg viewBox={`0 0 ${W} ${H+20}`} style={{width:'100%'}}>
+              {/* Target line 78% */}
+              <line x1={pad} y1={H-(78/maxH)*(H-10)} x2={W-pad} y2={H-(78/maxH)*(H-10)} stroke="#dc2626" strokeWidth="0.8" strokeDasharray="4,3" opacity="0.5"/>
+              <text x={W-pad+2} y={H-(78/maxH)*(H-10)+3} fontSize="7" fill="#dc2626">78%</text>
+              {/* Grid lines */}
+              {[0,25,50,75,100].map(v => (
+                <g key={v}>
+                  <line x1={pad} y1={H-(v/maxH)*(H-10)} x2={W-pad} y2={H-(v/maxH)*(H-10)} stroke="#e5e7eb" strokeWidth="0.5"/>
+                  <text x={pad-2} y={H-(v/maxH)*(H-10)+3} fontSize="6" fill="#9ca3af" textAnchor="end">{v}%</text>
+                </g>
+              ))}
+              {/* Line kandang A */}
+              {ptsA.length > 1 && <polyline points={ptsA.map((h,i,arr) => {
+                const x = pad + (i/(Math.max(arr.length-1,1)))*(W-pad*2)
+                const y = H - (h.hdp/maxH)*(H-10)
+                return `${x},${y}`
+              }).join(' ')} fill="none" stroke="#15803d" strokeWidth="1.5"/>}
+              {/* Line kandang B */}
+              {ptsB.length > 1 && <polyline points={ptsB.map((h,i,arr) => {
+                const x = pad + (i/(Math.max(arr.length-1,1)))*(W-pad*2)
+                const y = H - (h.hdp/maxH)*(H-10)
+                return `${x},${y}`
+              }).join(' ')} fill="none" stroke="#0284c7" strokeWidth="1.5"/>}
+              {/* Dots A */}
+              {ptsA.map((h,i,arr) => {
+                const x = pad + (i/(Math.max(arr.length-1,1)))*(W-pad*2)
+                const y = H - (h.hdp/maxH)*(H-10)
+                return <circle key={i} cx={x} cy={y} r="2.5" fill={h.hdp>=78?'#15803d':'#d97706'}/>
+              })}
+              {/* Dots B */}
+              {ptsB.map((h,i,arr) => {
+                const x = pad + (i/(Math.max(arr.length-1,1)))*(W-pad*2)
+                const y = H - (h.hdp/maxH)*(H-10)
+                return <circle key={i} cx={x} cy={y} r="2.5" fill={h.hdp>=78?'#0284c7':'#d97706'}/>
+              })}
+            </svg>
+            <div style={{display:'flex',gap:12,fontSize:9,color:'#6b7280'}}>
+              <span>🟢 Kandang A</span><span>🔵 Kandang B</span>
+              <span style={{color:'#dc2626'}}>--- Target 78%</span>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── GRAFIK PENDAPATAN VS PENGELUARAN PER BULAN ── */}
+      {(() => {
+        const rows = monthlyRows()
+        const maxVal = Math.max(...rows.map(r => Math.max(r.inc, r.exp)), 1)
+        const W = 320, H = 70, pad = 8, bw = (W-pad*2)/12/2-1
+        return (
+          <div style={S.card}>
+            <div style={S.sec}>📊 Pendapatan vs Pengeluaran per bulan</div>
+            <svg viewBox={`0 0 ${W} ${H+20}`} style={{width:'100%'}}>
+              {rows.map((r,i) => {
+                const x = pad + i*(W-pad*2)/12
+                const hInc = (r.inc/maxVal)*(H-5)
+                const hExp = (r.exp/maxVal)*(H-5)
+                return (
+                  <g key={i}>
+                    <rect x={x} y={H-hInc} width={bw} height={hInc} fill="#15803d" opacity="0.8" rx="1"/>
+                    <rect x={x+bw+1} y={H-hExp} width={bw} height={hExp} fill="#dc2626" opacity="0.8" rx="1"/>
+                    <text x={x+bw} y={H+12} fontSize="6" fill="#9ca3af" textAnchor="middle">{BULAN[i].slice(0,3)}</text>
+                  </g>
+                )
+              })}
+            </svg>
+            <div style={{display:'flex',gap:12,fontSize:9,color:'#6b7280'}}>
+              <span style={{color:'#15803d'}}>■ Pendapatan</span>
+              <span style={{color:'#dc2626'}}>■ Pengeluaran</span>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── TREND PRODUKSI ── */}
+      {hlog.length > 1 && (() => {
+        const data = hlog.slice(0,14).reverse()
+        const maxBtr = Math.max(...data.map(h=>h.tb),1)
+        const last5avg = data.slice(-5).reduce((a,h)=>a+h.tb,0)/Math.min(5,data.length)
+        const first5avg = data.slice(0,5).reduce((a,h)=>a+h.tb,0)/Math.min(5,data.length)
+        const trend = last5avg > first5avg ? '↑ Naik' : last5avg < first5avg ? '↓ Turun' : '→ Stabil'
+        const trendColor = last5avg > first5avg ? '#15803d' : last5avg < first5avg ? '#dc2626' : '#d97706'
+        const W=320, H=60, pad=8, bw=(W-pad*2)/data.length-2
+        return (
+          <div style={S.card}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+              <div style={S.sec}>🥚 Trend produksi harian</div>
+              <span style={{fontSize:12,fontWeight:700,color:trendColor}}>{trend}</span>
+            </div>
+            <svg viewBox={`0 0 ${W} ${H+16}`} style={{width:'100%'}}>
+              {data.map((h,i) => {
+                const x = pad + i*(bw+2)
+                const hBar = (h.tb/maxBtr)*(H-5)
+                const col = h.kd==='A'?'#15803d':'#0284c7'
+                return (
+                  <g key={i}>
+                    <rect x={x} y={H-hBar} width={bw} height={hBar} fill={col} opacity="0.8" rx="1"/>
+                    <text x={x+bw/2} y={H-hBar-2} fontSize="6" fill="#6b7280" textAnchor="middle">{h.tb}</text>
+                    <text x={x+bw/2} y={H+10} fontSize="6" fill="#9ca3af" textAnchor="middle">{h.tgl.split(' ')[0]}</text>
+                  </g>
+                )
+              })}
+            </svg>
+            <div style={{display:'flex',gap:12,fontSize:9,color:'#6b7280'}}>
+              <span>🟢 Kand A</span><span>🔵 Kand B</span>
+            </div>
+          </div>
+        )
+      })()}
     </>
   )}
+
+  // ── MENU ANALISIS BIAYA (khusus Admin) ──
+  const renderAnalisis = () => {
+    const totalProdKg = hlog.reduce((a,h) => a+h.kg, 0)
+    const totalProdBtr = hlog.reduce((a,h) => a+h.tb, 0)
+    const hpp = totalProdKg > 0 ? totalExpense / totalProdKg : 0
+    const hargaJual = slog.length > 0 ? slog.reduce((a,t)=>a+t.harga,0)/slog.length : 0
+    const marginPerKg = hargaJual - hpp
+    const totalBiayaPakan = ecByCat()['pakan'] || 0
+    const pctPakan = totalExpense > 0 ? (totalBiayaPakan/totalExpense*100) : 0
+    const roiPakan = totalBiayaPakan > 0 ? (totalIncome/totalBiayaPakan) : 0
+
+    // BEP
+    const biayaVariabel = totalBiayaPakan // pakan = biaya variabel utama
+    const biayaTetap = totalExpense - biayaVariabel // gaji, listrik, dll
+    const bvPerKg = totalProdKg > 0 ? biayaVariabel/totalProdKg : 0
+    const bepKg = (hargaJual - bvPerKg) > 0 ? biayaTetap/(hargaJual-bvPerKg) : 0
+    const bepRp = bepKg * hargaJual
+
+    // Realisasi vs target
+    const realisasiKg = totalProdKg
+    const targetKg = cfg.target_produksi_kg || 0
+    const pctTarget = targetKg > 0 ? (realisasiKg/targetKg*100) : 0
+
+    return (
+      <>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:2}}>Analisis Biaya</div>
+        <div style={{fontSize:11,color:'#6b7280',marginBottom:10}}>HPP, BEP & efisiensi biaya — khusus Admin</div>
+
+        {/* HPP */}
+        <div style={S.card}>
+          <div style={S.sec}>💰 Harga Pokok Produksi (HPP)</div>
+          <div style={S.g2}>
+            <div style={{...S.stat,borderTop:'2px solid #dc2626'}}>
+              <div style={{fontSize:10,color:'#6b7280'}}>HPP per kg</div>
+              <div style={{fontSize:18,fontWeight:700,color:'#dc2626'}}>{rp(hpp)}</div>
+              <div style={{fontSize:9,color:'#9ca3af'}}>biaya ÷ produksi</div>
+            </div>
+            <div style={{...S.stat,borderTop:'2px solid #15803d'}}>
+              <div style={{fontSize:10,color:'#6b7280'}}>Harga Jual rata-rata</div>
+              <div style={{fontSize:18,fontWeight:700,color:'#15803d'}}>{rp(hargaJual)}</div>
+              <div style={{fontSize:9,color:'#9ca3af'}}>per kg</div>
+            </div>
+            <div style={{...S.stat,borderTop:`2px solid ${marginPerKg>=0?'#15803d':'#dc2626'}`}}>
+              <div style={{fontSize:10,color:'#6b7280'}}>Margin per kg</div>
+              <div style={{fontSize:18,fontWeight:700,color:marginPerKg>=0?'#15803d':'#dc2626'}}>{rp(marginPerKg)}</div>
+              <div style={{fontSize:9,color:'#9ca3af'}}>{marginPerKg>=0?'untung':'rugi'} per kg</div>
+            </div>
+            <div style={{...S.stat,borderTop:'2px solid #0284c7'}}>
+              <div style={{fontSize:10,color:'#6b7280'}}>Total Produksi</div>
+              <div style={{fontSize:18,fontWeight:700,color:'#0284c7'}}>{f1(totalProdKg)} kg</div>
+              <div style={{fontSize:9,color:'#9ca3af'}}>{totalProdBtr} butir</div>
+            </div>
+          </div>
+          <div style={{background:'#f9fafb',borderRadius:8,padding:'8px 10px',marginTop:8,fontSize:10}}>
+            <div>Total Pengeluaran: <strong>{rp(totalExpense)}</strong></div>
+            <div>Total Produksi: <strong>{f1(totalProdKg)} kg</strong></div>
+            <div style={{marginTop:4,color:'#dc2626',fontWeight:600}}>HPP = {rp(totalExpense)} ÷ {f1(totalProdKg)} kg = <strong>{rp(hpp)}/kg</strong></div>
+          </div>
+        </div>
+
+        {/* BEP */}
+        <div style={S.card}>
+          <div style={S.sec}>📊 Break Even Point (BEP)</div>
+          <div style={S.g2}>
+            <div style={{...S.stat,borderTop:'2px solid #7c3aed'}}>
+              <div style={{fontSize:10,color:'#6b7280'}}>BEP Volume</div>
+              <div style={{fontSize:18,fontWeight:700,color:'#7c3aed'}}>{f1(bepKg)} kg</div>
+              <div style={{fontSize:9,color:'#9ca3af'}}>harus terjual</div>
+            </div>
+            <div style={{...S.stat,borderTop:'2px solid #d97706'}}>
+              <div style={{fontSize:10,color:'#6b7280'}}>BEP Nilai</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#d97706'}}>{rp(bepRp)}</div>
+              <div style={{fontSize:9,color:'#9ca3af'}}>pendapatan minimal</div>
+            </div>
+          </div>
+          <div style={{background:'#faf5ff',borderRadius:8,padding:'8px 10px',marginTop:8,fontSize:10}}>
+            <div>Biaya Tetap (gaji, listrik, dll): <strong>{rp(biayaTetap)}</strong></div>
+            <div>Biaya Variabel per kg (pakan): <strong>{rp(bvPerKg)}</strong></div>
+            <div>Harga Jual per kg: <strong>{rp(hargaJual)}</strong></div>
+            <div style={{marginTop:4,color:'#7c3aed',fontWeight:600}}>
+              BEP = {rp(biayaTetap)} ÷ ({rp(hargaJual)} - {rp(bvPerKg)}) = <strong>{f1(bepKg)} kg</strong>
+            </div>
+            <div style={{marginTop:4,color: totalProdKg>=bepKg?'#15803d':'#dc2626',fontWeight:600}}>
+              Status: Produksi {f1(totalProdKg)} kg {totalProdKg>=bepKg?'≥':'<'} BEP {f1(bepKg)} kg → {totalProdKg>=bepKg?'✅ Di atas BEP':'⚠ Belum mencapai BEP'}
+            </div>
+          </div>
+        </div>
+
+        {/* Efisiensi Pakan */}
+        <div style={S.card}>
+          <div style={S.sec}>🌾 Efisiensi Biaya Pakan</div>
+          <div style={S.g2}>
+            <div style={{...S.stat,borderTop:'2px solid #d97706'}}>
+              <div style={{fontSize:10,color:'#6b7280'}}>Biaya Pakan</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#d97706'}}>{rp(totalBiayaPakan)}</div>
+              <div style={{fontSize:9,color:'#9ca3af'}}>{f1(pctPakan)}% dari total biaya</div>
+            </div>
+            <div style={{...S.stat,borderTop:`2px solid ${roiPakan>=1?'#15803d':'#dc2626'}`}}>
+              <div style={{fontSize:10,color:'#6b7280'}}>ROI Pakan</div>
+              <div style={{fontSize:18,fontWeight:700,color:roiPakan>=1?'#15803d':'#dc2626'}}>{f1(roiPakan)}x</div>
+              <div style={{fontSize:9,color:'#9ca3af'}}>pendapatan per Rp pakan</div>
+            </div>
+          </div>
+          {/* Bar chart biaya per kategori */}
+          <div style={{marginTop:10}}>
+            {Object.entries(ecByCat()).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v]) => {
+              const ki = KATS.find(x=>x.id===k)
+              const pct = totalExpense>0?(v/totalExpense*100):0
+              return (
+                <div key={k} style={{marginBottom:6}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:10,marginBottom:2}}>
+                    <span>{ki?.ic} {ki?.label}</span>
+                    <span style={{color:ki?.c,fontWeight:600}}>{rp(v)} ({f1(pct)}%)</span>
+                  </div>
+                  <div style={{...S.bar,height:6}}>
+                    <div style={{background:ki?.c,width:`${pct}%`,height:'100%',borderRadius:99}}/>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Realisasi vs Target */}
+        {targetKg > 0 && (
+          <div style={S.card}>
+            <div style={S.sec}>🎯 Realisasi vs Target</div>
+            <div style={S.g2}>
+              <div style={S.stat}>
+                <div style={{fontSize:10,color:'#6b7280'}}>Target Produksi</div>
+                <div style={{fontSize:16,fontWeight:700,color:'#374151'}}>{f1(targetKg)} kg</div>
+              </div>
+              <div style={S.stat}>
+                <div style={{fontSize:10,color:'#6b7280'}}>Realisasi</div>
+                <div style={{fontSize:16,fontWeight:700,color:pctTarget>=100?'#15803d':'#d97706'}}>{f1(realisasiKg)} kg</div>
+              </div>
+            </div>
+            <div style={{marginTop:8}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:10,marginBottom:3}}>
+                <span>Pencapaian Target</span>
+                <span style={{fontWeight:700,color:pctTarget>=100?'#15803d':'#d97706'}}>{f1(pctTarget)}%</span>
+              </div>
+              <div style={{...S.bar,height:8}}>
+                <div style={{background:pctTarget>=100?'#15803d':'#d97706',width:`${Math.min(pctTarget,100)}%`,height:'100%',borderRadius:99}}/>
+              </div>
+              {cfg.target_hdp > 0 && (
+                <div style={{marginTop:8,fontSize:10,color:'#6b7280'}}>
+                  Target HDP: <strong>{cfg.target_hdp}%</strong> |
+                  Realisasi HDP A: <strong style={{color:hdpA>=cfg.target_hdp?'#15803d':'#dc2626'}}>{f1(hdpA)}%</strong> |
+                  Realisasi HDP B: <strong style={{color:hdpB>=cfg.target_hdp?'#15803d':'#dc2626'}}>{f1(hdpB)}%</strong>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </>
+    )
+  }
 
   // ── HELPER RENDER GRID KAMAR ──
   const renderRoomGrid = (kdX) => {
@@ -1846,6 +2269,14 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
       pakan_a: cfg.pakan_a || 200,
       pakan_b: cfg.pakan_b || 150,
       stok_kg: cfg.stok_kg || 0,
+      dana_desa: Math.round(cfg.dana_desa || 0),
+      target_produksi_kg: cfg.target_produksi_kg || 0,
+      target_hdp: cfg.target_hdp || 78,
+      nama_direktur: cfg.nama_direktur || '',
+      nama_bendahara: cfg.nama_bendahara || '',
+      nama_kades: cfg.nama_kades || '',
+      no_perdes: cfg.no_perdes || '',
+      tahun_laporan: cfg.tahun_laporan || new Date().getFullYear(),
     })
     const [saving, setSaving] = useState(false)
     const [np, setNp] = useState({ nama: '', alamat: '', hp: '' })
@@ -1860,6 +2291,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
           kas: +sv.kas, pop_a: +sv.pop_a, pop_b: +sv.pop_b,
           pakan_a: +sv.pakan_a, pakan_b: +sv.pakan_b,
           stok_kg: +sv.stok_kg, modal_awal: +sv.modal_awal,
+          dana_desa: +sv.dana_desa, target_produksi_kg: +sv.target_produksi_kg,
+          target_hdp: +sv.target_hdp, tahun_laporan: +sv.tahun_laporan,
         }))
         alert('Pengaturan berhasil disimpan!')
       } catch(err) {
@@ -1990,6 +2423,47 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
             </div>
           )}
           {pelanggan.length === 0 && <div style={{ textAlign: 'center', padding: '12px 0', fontSize: 11, color: '#9ca3af' }}>Belum ada pelanggan tersimpan</div>}
+        </div>
+
+        {/* Data Laporan Pertanggungjawaban */}
+        <div style={S.card}>
+          <div style={S.sec}>📋 Data Laporan Pertanggungjawaban</div>
+          <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 8 }}>Digunakan untuk generate laporan tahunan ke Pemerintah Desa</div>
+
+          <div style={S.g2}>
+            <div>
+              <label style={S.lbl}>Tahun Laporan</label>
+              <input style={S.inp} type="number" value={sv.tahun_laporan} onChange={e => setSv(p => ({ ...p, tahun_laporan: e.target.value }))} />
+            </div>
+            <div>
+              <label style={S.lbl}>No. Perdes Modal BUMDes</label>
+              <input style={S.inp} type="text" placeholder="Misal: 05/2024" value={sv.no_perdes} onChange={e => setSv(p => ({ ...p, no_perdes: e.target.value }))} />
+            </div>
+          </div>
+
+          <label style={S.lbl}>Dana Desa yang Diterima BUMDes (Rp)</label>
+          <input style={S.inp} type="number" placeholder="0" value={sv.dana_desa} onChange={e => setSv(p => ({ ...p, dana_desa: e.target.value }))} />
+
+          <div style={S.g2}>
+            <div>
+              <label style={S.lbl}>Target Produksi Tahunan (kg)</label>
+              <input style={S.inp} type="number" placeholder="0" value={sv.target_produksi_kg} onChange={e => setSv(p => ({ ...p, target_produksi_kg: e.target.value }))} />
+            </div>
+            <div>
+              <label style={S.lbl}>Target HDP (%)</label>
+              <input style={S.inp} type="number" placeholder="78" value={sv.target_hdp} onChange={e => setSv(p => ({ ...p, target_hdp: e.target.value }))} />
+            </div>
+          </div>
+
+          <div style={{ height: 1, background: '#f3f4f6', margin: '10px 0' }} />
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Pejabat Penandatangan</div>
+
+          {[['Nama Direktur BUMDes','nama_direktur'],['Nama Bendahara BUMDes','nama_bendahara'],['Nama Kepala Desa','nama_kades']].map(([l, k]) => (
+            <div key={k}>
+              <label style={S.lbl}>{l}</label>
+              <input style={S.inp} type="text" placeholder={l} value={sv[k] || ''} onChange={e => setSv(p => ({ ...p, [k]: e.target.value }))} />
+            </div>
+          ))}
         </div>
 
         <button style={{ ...S.btnGrn, opacity: saving ? 0.7 : 1 }} onClick={handleSimpan} disabled={saving}>
@@ -2263,13 +2737,14 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td>${x.p}%</td><td>${Math.round(lb*x.p/100).
       </div>
 
       <div style={S.page}>
-        {tab === 'dash'    && renderDash()}
-        {tab === 'input'   && renderInput()}
-        {tab === 'kasir'   && renderKasir()}
-        {tab === 'keluar'  && renderKeluar()}
-        {tab === 'laporan' && renderLaporan()}
-        {tab === 'hist'    && renderHist()}
-        {tab === 'setting' && renderSetting()}
+        {tab === 'dash'     && renderDash()}
+        {tab === 'input'    && renderInput()}
+        {tab === 'kasir'    && renderKasir()}
+        {tab === 'keluar'   && renderKeluar()}
+        {tab === 'laporan'  && renderLaporan()}
+        {tab === 'analisis' && renderAnalisis()}
+        {tab === 'hist'     && renderHist()}
+        {tab === 'setting'  && renderSetting()}
       </div>
 
       <nav style={S.botnav}>
