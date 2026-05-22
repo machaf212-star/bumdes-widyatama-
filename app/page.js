@@ -1541,7 +1541,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               {(parseInt(fd.rusak)||0)>0 && <span style={{ color:'#f59e0b', marginLeft:8 }}>| Rusak: {fd.rusak} butir</span>}
             </div>
             <button style={{ ...S.btnGrn, background:col }} onClick={() => simpanPanenKandang(kdX)}>
-              <i class="ti ti-device-floppy" style="margin-right:6px"/> Simpan Panen Kandang {kdX}
+              <i className="ti ti-device-floppy" style={{fontSize:14,marginRight:6}}/> Simpan Panen Kandang {kdX}
             </button>
           </div>
         </>
@@ -1591,7 +1591,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             </div>
             <button style={{ ...S.btnGrn, background:'#f59e0b', marginTop:8 }}
               onClick={() => simpanPakanSesi('pagi')}>
-              <i class="ti ti-device-floppy" style="margin-right:6px"/> Simpan Pakan Pagi
+              <i className="ti ti-device-floppy" style={{fontSize:14,marginRight:6}}/> Simpan Pakan Pagi
             </button>
           </div>
 
@@ -1612,7 +1612,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             </div>
             <button style={{ ...S.btnGrn, background:'#ea580c', marginTop:8 }}
               onClick={() => simpanPakanSesi('sore')}>
-              <i class="ti ti-device-floppy" style="margin-right:6px"/> Simpan Pakan Sore
+              <i className="ti ti-device-floppy" style={{fontSize:14,marginRight:6}}/> Simpan Pakan Sore
             </button>
           </div>
 
@@ -1734,7 +1734,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           </div>
           {prev > 0 && <div style={{ background: '#eff6ff', borderRadius: 8, padding: '8px 10px', marginTop: 7, display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 11, color: '#6b7280' }}>Total</span><span style={{ fontSize: 16, fontWeight: 600, color: '#1e3a5f' }}>{rp(prev)}</span></div>}
           {warn && <div style={{ background: '#fff1f2', borderRadius: 8, padding: 8, marginTop: 6, fontSize: 11, color: '#dc2626', textAlign: 'center' }}>Stok Telur Tidak Mencukupi! ({f1(cfg.stok_kg)} kg)</div>}
-          <button style={S.btnGrn} onClick={prosesJual}><i class="ti ti-receipt" style="margin-right:6px"/> Proses & Cetak Struk</button>
+          <button style={S.btnGrn} onClick={prosesJual}><i className="ti ti-receipt" style={{fontSize:14,marginRight:6}}/> Proses & Cetak Struk</button>
         </div>
 
         {piutang.length > 0 && (
@@ -1768,8 +1768,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                     <div style={{ fontWeight: 600, fontSize: 12, color: '#1e3a5f' }}>{rp(t.total)}</div>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', marginTop: 3 }}>
                       <button onClick={() => setReceipt(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0ea5e9', cursor: 'pointer' }}>Struk</button>
-                      <button onClick={() => printStruk(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#1e3a5f', cursor: 'pointer' }}><i class="ti ti-printer" style="margin-right:4px"/> Print</button>
-                      <button onClick={() => kirimWAStruk(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0369a1', cursor: 'pointer' }}><i class="ti ti-brand-whatsapp" style="margin-right:4px"/> WA</button>
+                      <button onClick={() => printStruk(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#1e3a5f', cursor: 'pointer' }}><i className="ti ti-printer" style={{fontSize:14,marginRight:4}}/> Print</button>
+                      <button onClick={() => kirimWAStruk(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0369a1', cursor: 'pointer' }}><i className="ti ti-brand-whatsapp" style={{fontSize:14,marginRight:4}}/> WA</button>
                     </div>
                   </div>
                 </div>
@@ -1827,7 +1827,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             <div style={{ background: '#eff6ff', borderRadius: 8, padding: '7px 10px', margin: '6px 0 8px', fontSize: 10, color: '#1e3a5f' }}>✓ Stok pakan bertambah otomatis</div>
           </>
         )}
-        <button style={S.btnGrn} onClick={simpanKeluar}><i class="ti ti-device-floppy" style="margin-right:6px"/> Simpan pengeluaran</button>
+        <button style={S.btnGrn} onClick={simpanKeluar}><i className="ti ti-device-floppy" style={{fontSize:14,marginRight:6}}/> Simpan pengeluaran</button>
       </div>
       <div style={S.card}>
         <div style={S.sec}>Riwayat pengeluaran</div>
@@ -1852,8 +1852,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 600, fontSize: 12, color: '#dc2626' }}>{rp(e.jml)}</div>
                   <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', marginTop: 2 }}>
-                    <button onClick={() => printKwitansi(e)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#1e3a5f', cursor: 'pointer' }}><i class="ti ti-printer" style="margin-right:4px"/> Print</button>
-                    <button onClick={() => kirimWAKwitansi(e)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0369a1', cursor: 'pointer' }}><i class="ti ti-brand-whatsapp" style="margin-right:4px"/> WA</button>
+                    <button onClick={() => printKwitansi(e)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#1e3a5f', cursor: 'pointer' }}><i className="ti ti-printer" style={{fontSize:14,marginRight:4}}/> Print</button>
+                    <button onClick={() => kirimWAKwitansi(e)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0369a1', cursor: 'pointer' }}><i className="ti ti-brand-whatsapp" style={{fontSize:14,marginRight:4}}/> WA</button>
                   </div>
                 </div>
               </div>
@@ -1877,7 +1877,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <button onClick={printLaporan}
             style={{ flex: 1, background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-            <i class="ti ti-printer" style="margin-right:6px"/> Print / PDF
+            <i className="ti ti-printer" style={{fontSize:14,marginRight:6}}/> Print / PDF
           </button>
           <button onClick={exportCSV}
             style={{ flex: 1, background: '#fff', color: '#1e3a5f', border: '0.5px solid #1e3a5f', borderRadius: 8, padding: '10px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
@@ -2198,7 +2198,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                     {log.roomDetail && (
                       <button onClick={() => setRekapPopup(log)}
                         style={{ background: '#eff6ff', border: '0.5px solid #bfdbfe', borderRadius: 6, padding: '4px 8px', fontSize: 9, fontWeight: 600, color: '#1e3a5f', cursor: 'pointer', display: 'block', marginBottom: 4 }}>
-                        <i class="ti ti-layout-grid" style="margin-right:4px"/> Rekap Kamar
+                        <i className="ti ti-layout-grid" style={{fontSize:14,marginRight:4}}/> Rekap Kamar
                       </button>
                     )}
                     {/* Tombol update pakan untuk koreksi data */}
@@ -2410,7 +2410,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               <option value="abk">ABK (Peternak + Kasir)</option>
               <option value="admin">Admin</option>
             </select>
-            <button style={{ ...S.btnGrn, marginTop: 0 }} onClick={addUser}><i class="ti ti-user-plus" style="margin-right:6px"/> Tambah Pengguna</button>
+            <button style={{ ...S.btnGrn, marginTop: 0 }} onClick={addUser}><i className="ti ti-user-plus" style={{fontSize:14,marginRight:6}}/> Tambah Pengguna</button>
           </div>
         </div>
         <div style={S.card}>
@@ -2427,7 +2427,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             const savedName = np.nama
             setNp({ nama: '', alamat: '', hp: '' })
             alert(`${savedName} berhasil ditambahkan!`)
-          }}><i class="ti ti-plus" style="margin-right:6px"/> Tambah Pelanggan</button>
+          }}><i className="ti ti-plus" style={{fontSize:14,marginRight:6}}/> Tambah Pelanggan</button>
 
           {/* Daftar pelanggan */}
           {pelanggan.length > 0 && (
@@ -2490,7 +2490,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         </div>
 
         <button style={{ ...S.btnGrn, opacity: saving ? 0.7 : 1 }} onClick={handleSimpan} disabled={saving}>
-          {saving ? '⏳ Menyimpan...' : '<i class="ti ti-device-floppy" style="margin-right:6px"/> Simpan semua pengaturan'}
+          {saving ? '⏳ Menyimpan...' : '<i className="ti ti-device-floppy" style={{fontSize:14,marginRight:6}}/> Simpan semua pengaturan'}
         </button>
       </>
     )
@@ -2547,7 +2547,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               else alert('Tap tombol Share di browser → Print → pilih printer RPP02')
             }}
             style={{ flex:1, background:'#1e3a5f', color:'#fff', border:'none', borderRadius:8, padding:'12px 0', fontSize:13, fontWeight:600, cursor:'pointer' }}>
-            <i class="ti ti-printer" style="margin-right:6px"/> Print Sekarang
+            <i className="ti ti-printer" style={{fontSize:14,marginRight:6}}/> Print Sekarang
           </button>
           <button onClick={() => setPrintPopup(null)}
             style={{ flex:1, background:'#f8fafc', color:'#374151', border:'0.5px solid #e2e8f0', borderRadius:8, padding:'12px 0', fontSize:13, fontWeight:600, cursor:'pointer' }}>
@@ -2611,11 +2611,11 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={doCopy}
               style={{ flex: 1, background: copied ? '#1e3a5f' : '#eff6ff', color: copied ? '#fff' : '#1e3a5f', border: `1px solid ${copied?'#1e3a5f':'#bfdbfe'}`, borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              {copied ? '<i class="ti ti-check" style="margin-right:6px"/> Tersalin!' : '<i class="ti ti-copy" style="margin-right:6px"/> Copy Teks'}
+              {copied ? '<i className="ti ti-check" style={{fontSize:14,marginRight:6}}/> Tersalin!' : '<i className="ti ti-copy" style={{fontSize:14,marginRight:6}}/> Copy Teks'}
             </button>
             <button onClick={bukaWA}
               style={{ flex: 1, background: '#0369a1', color: '#fff', border: 'none', borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              <i class="ti ti-brand-whatsapp" style="margin-right:6px"/> Buka WA
+              <i className="ti ti-brand-whatsapp" style={{fontSize:14,marginRight:6}}/> Buka WA
             </button>
           </div>
         </div>
@@ -2646,7 +2646,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 13 }}><i class="ti ti-layout-grid" style="margin-right:4px"/> Rekap Kamar — Kandang {log.kd}</div>
+              <div style={{ fontWeight: 600, fontSize: 13 }}><i className="ti ti-layout-grid" style={{fontSize:14,marginRight:4}}/> Rekap Kamar — Kandang {log.kd}</div>
               <div style={{ fontSize: 10, color: '#6b7280' }}>{log.tgl} · {log.tb} butir · HDP {f1(log.hdp)}%</div>
             </div>
             <button onClick={() => setRekapPopup(null)} style={{ background: '#f8fafc', border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', fontSize: 12 }}>✕</button>
@@ -2726,9 +2726,9 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           <div style={{ textAlign: 'center', fontSize: 10, color: '#9ca3af', marginBottom: 10 }}>Terima kasih atas kepercayaan Anda!</div>
           <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
             <button onClick={() => printStruk(receipt)}
-              style={{ flex: 1, background: '#eff6ff', color: '#1e3a5f', border: '0.5px solid #bfdbfe', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><i class="ti ti-printer" style="margin-right:6px"/> Print Termal</button>
+              style={{ flex: 1, background: '#eff6ff', color: '#1e3a5f', border: '0.5px solid #bfdbfe', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><i className="ti ti-printer" style={{fontSize:14,marginRight:6}}/> Print Termal</button>
             <button onClick={() => kirimWAStruk(receipt)}
-              style={{ flex: 1, background: '#eff6ff', color: '#0369a1', border: '0.5px solid #bfdbfe', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><i class="ti ti-brand-whatsapp" style="margin-right:6px"/> Kirim WA</button>
+              style={{ flex: 1, background: '#eff6ff', color: '#0369a1', border: '0.5px solid #bfdbfe', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><i className="ti ti-brand-whatsapp" style={{fontSize:14,marginRight:6}}/> Kirim WA</button>
           </div>
           <button style={S.btnGrn} onClick={() => setReceipt(null)}>Tutup Struk</button>
         </div>
