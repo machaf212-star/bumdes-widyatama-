@@ -5,21 +5,21 @@ import { supabase } from '../lib/supabase'
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const ROLES = {
   admin: { label: 'Admin', c: '#7c3aed', bg: '#ede9fe', tabs: ['dash','input','kasir','keluar','laporan','analisis','hist','setting'] },
-  abk:   { label: 'ABK',   c: '#15803d', bg: '#dcfce7', tabs: ['dash','input','kasir','keluar','hist'] },
+  abk:   { label: 'ABK',   c: '#1e3a5f', bg: '#dbeafe', tabs: ['dash','input','kasir','keluar','hist'] },
 }
 const KATS = [
-  { id: 'pakan',  label: 'Pakan',        ic: '🌾', c: '#15803d' },
+  { id: 'pakan',  label: 'Pakan',        ic: '🌾', c: '#1e3a5f' },
   { id: 'obat',   label: 'Obat/Vaksin',  ic: '💊', c: '#dc2626' },
-  { id: 'listrik',label: 'Listrik/Air',  ic: '⚡', c: '#d97706' },
-  { id: 'gaji',   label: 'Gaji',         ic: '👤', c: '#0284c7' },
+  { id: 'listrik',label: 'Listrik/Air',  ic: '⚡', c: '#f59e0b' },
+  { id: 'gaji',   label: 'Gaji',         ic: '👤', c: '#0ea5e9' },
   { id: 'pemel',  label: 'Pemeliharaan', ic: '🔧', c: '#7c3aed' },
   { id: 'lain',   label: 'Lain-lain',    ic: '📦', c: '#6b7280' },
 ]
 const SHU = [
-  { l: 'Reinvestasi', p: 25, c: '#16a34a' },
-  { l: 'PADes',       p: 25, c: '#0284c7' },
+  { l: 'Reinvestasi', p: 25, c: '#0369a1' },
+  { l: 'PADes',       p: 25, c: '#0ea5e9' },
   { l: 'Cadangan',    p: 15, c: '#7c3aed' },
-  { l: 'Manajemen',   p: 30, c: '#d97706' },
+  { l: 'Manajemen',   p: 30, c: '#f59e0b' },
   { l: 'Sosial/CSR',  p:  5, c: '#db2777' },
 ]
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
@@ -37,26 +37,26 @@ const katOf = id => KATS.find(k => k.id === id) || KATS[0]
 
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 const S = {
-  wrap:    { fontFamily: 'system-ui,sans-serif', background: '#f3f4f6', minHeight: '100vh', maxWidth: 430, margin: '0 auto', position: 'relative' },
-  topbar:  { background: '#15803d', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
+  wrap:    { fontFamily: 'system-ui,sans-serif', background: '#f8fafc', minHeight: '100vh', maxWidth: 430, margin: '0 auto', position: 'relative' },
+  topbar:  { background: '#1e3a5f', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
   page:    { padding: '10px 12px 74px' },
-  card:    { background: '#fff', borderRadius: 12, border: '0.5px solid #e5e7eb', padding: '12px 14px', marginBottom: 8 },
+  card:    { background: '#fff', borderRadius: 12, border: '0.5px solid #e2e8f0', padding: '12px 14px', marginBottom: 8 },
   g2:      { display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 },
   g3:      { display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 },
-  stat:    { background: '#f9fafb', borderRadius: 8, padding: '10px 12px' },
-  sec:     { fontSize: 10, fontWeight: 600, color: '#15803d', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 },
+  stat:    { background: '#f8fafc', borderRadius: 8, padding: '10px 12px' },
+  sec:     { fontSize: 10, fontWeight: 600, color: '#1e3a5f', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 },
   lbl:     { fontSize: 11, color: '#6b7280', fontWeight: 500, display: 'block', marginBottom: 3, marginTop: 7 },
   inp:     { width: '100%', borderRadius: 8, border: '0.5px solid #d1d5db', padding: '8px 10px', fontSize: 12, background: '#fff', color: '#111', fontFamily: 'inherit', boxSizing: 'border-box' },
   sel:     { width: '100%', borderRadius: 8, border: '0.5px solid #d1d5db', padding: '8px 10px', fontSize: 12, background: '#fff', color: '#111', fontFamily: 'inherit', boxSizing: 'border-box' },
-  btnGrn:  { background: '#15803d', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', width: '100%', marginTop: 8, fontFamily: 'inherit' },
-  btnSm:   { border: '0.5px solid #d1d5db', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 500, cursor: 'pointer', background: '#f9fafb', color: '#374151', fontFamily: 'inherit' },
-  botnav:  { background: '#fff', borderTop: '0.5px solid #e5e7eb', display: 'flex', position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, zIndex: 10 },
-  nbtn:    (on) => ({ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer', background: 'none', border: 'none', fontSize: 8, padding: '6px 2px', color: on ? '#15803d' : '#6b7280', fontWeight: on ? 600 : 400, fontFamily: 'inherit' }),
+  btnGrn:  { background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', width: '100%', marginTop: 8, fontFamily: 'inherit' },
+  btnSm:   { border: '0.5px solid #d1d5db', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 500, cursor: 'pointer', background: '#f8fafc', color: '#374151', fontFamily: 'inherit' },
+  botnav:  { background: '#fff', borderTop: '0.5px solid #e2e8f0', display: 'flex', position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, zIndex: 10 },
+  nbtn:    (on) => ({ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer', background: 'none', border: 'none', fontSize: 8, padding: '6px 2px', color: on ? '#1e3a5f' : '#6b7280', fontWeight: on ? 600 : 400, fontFamily: 'inherit' }),
   tag:     { borderRadius: 4, padding: '2px 7px', fontSize: 10, fontWeight: 500, display: 'inline-block' },
-  bar:     { background: '#e5e7eb', borderRadius: 99, height: 5, marginTop: 4 },
-  notif:   (err) => ({ position: 'fixed', top: 62, left: '50%', transform: 'translateX(-50%)', zIndex: 100, borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 600, color: '#fff', background: err ? '#dc2626' : '#15803d', whiteSpace: 'nowrap', maxWidth: '90%' }),
-  loginWrap: { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#f3f4f6' },
-  pakanBox:  { background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 8, padding: '11px 13px', marginBottom: 10 },
+  bar:     { background: '#e2e8f0', borderRadius: 99, height: 5, marginTop: 4 },
+  notif:   (err) => ({ position: 'fixed', top: 62, left: '50%', transform: 'translateX(-50%)', zIndex: 100, borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 600, color: '#fff', background: err ? '#dc2626' : '#1e3a5f', whiteSpace: 'nowrap', maxWidth: '90%' }),
+  loginWrap: { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#f8fafc' },
+  pakanBox:  { background: '#fefce8', border: '1px solid #fde047', borderRadius: 8, padding: '11px 13px', marginBottom: 10 },
   rg:        { display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 5, maxHeight: 320, overflowY: 'auto' },
 }
 
@@ -402,7 +402,7 @@ td{border:1px solid #000;padding:3px 6px}
 .sign-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:30px}
 .sign-box{text-align:center}
 .sign-line{border-top:1px solid #000;margin-top:50px;padding-top:4px;font-weight:bold}
-.no-print{background:#15803d;color:#fff;padding:8px;text-align:center;margin-bottom:12px;cursor:pointer;font-family:Arial}
+.no-print{background:#1e3a5f;color:#fff;padding:8px;text-align:center;margin-bottom:12px;cursor:pointer;font-family:Arial}
 ol{padding-left:20px;margin-bottom:6px}
 li{margin-bottom:2px}
 @media print{.no-print{display:none}body{padding:15mm 20mm}}
@@ -959,7 +959,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
   if (loading) return (
     <div style={{ ...S.loginWrap, gap: 12 }}>
       <div style={{ fontSize: 40 }}>🐓</div>
-      <div style={{ fontSize: 16, fontWeight: 600, color: '#15803d' }}>BUMDes Widyatama</div>
+      <div style={{ fontSize: 16, fontWeight: 600, color: '#1e3a5f' }}>BUMDes Widyatama</div>
       <div style={{ fontSize: 13, color: '#6b7280' }}>Memuat data...</div>
     </div>
   )
@@ -968,8 +968,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
   if (!user) return (
     <div style={S.loginWrap}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <div style={{ width: 58, height: 58, borderRadius: 14, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', fontSize: 28 }}>🐓</div>
-        <div style={{ fontSize: 18, fontWeight: 600, color: '#15803d' }}>{cfg.nama_bumdes}</div>
+        <div style={{ width: 58, height: 58, borderRadius: 14, background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', fontSize: 28 }}>🐓</div>
+        <div style={{ fontSize: 18, fontWeight: 600, color: '#1e3a5f' }}>{cfg.nama_bumdes}</div>
         <div style={{ fontSize: 11, color: '#6b7280' }}>{cfg.desa}, {cfg.kecamatan}</div>
       </div>
       <div style={{ ...S.card, width: '100%', maxWidth: 310 }}>
@@ -1002,8 +1002,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
   const ec = ecByCat()
   const hdpA = hdpAvg('A'), hdpB = hdpAvg('B')
-  const hcA = hdpA >= 78 ? '#15803d' : hdpA > 0 ? '#dc2626' : '#9ca3af'
-  const hcB = hdpB >= 78 ? '#15803d' : hdpB > 0 ? '#dc2626' : '#9ca3af'
+  const hcA = hdpA >= 78 ? '#1e3a5f' : hdpA > 0 ? '#dc2626' : '#9ca3af'
+  const hcB = hdpB >= 78 ? '#1e3a5f' : hdpB > 0 ? '#dc2626' : '#9ca3af'
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER PAGES
@@ -1014,10 +1014,10 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
     return (
     <>
       <div style={S.g2}>
-        {[['Stok Telur', `${f1(cfg.stok_kg)} kg`, `${cfg.stok_butir} butir`, '#15803d'],
-          ['Laba Bersih', rp(laba), laba >= 0 ? 'positif' : 'negatif', laba >= 0 ? '#15803d' : '#dc2626'],
-          ['Pendapatan', rp(totalIncome), 'penjualan', '#0284c7'],
-          ['Pengeluaran', rp(totalExpense), 'biaya', '#d97706'],
+        {[['Stok Telur', `${f1(cfg.stok_kg)} kg`, `${cfg.stok_butir} butir`, '#1e3a5f'],
+          ['Laba Bersih', rp(laba), laba >= 0 ? 'positif' : 'negatif', laba >= 0 ? '#1e3a5f' : '#dc2626'],
+          ['Pendapatan', rp(totalIncome), 'penjualan', '#0ea5e9'],
+          ['Pengeluaran', rp(totalExpense), 'biaya', '#f59e0b'],
         ].map(([l, v, s, c]) => (
           <div key={l} style={S.stat}>
             <div style={{ fontSize: 10, color: '#6b7280' }}>{l}</div>
@@ -1028,24 +1028,24 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
       </div>
 
       {/* Modal Awal + Saldo Kas */}
-      <div style={{ ...S.card, marginTop: 8, background: '#f0fdf4', border: '0.5px solid #bbf7d0' }}>
+      <div style={{ ...S.card, marginTop: 8, background: '#eff6ff', border: '0.5px solid #bfdbfe' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: 10, color: '#6b7280' }}>Saldo Kas Aktual</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#15803d' }}>{rp(saldoKasTotal)}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#1e3a5f' }}>{rp(saldoKasTotal)}</div>
             <div style={{ fontSize: 9, color: '#6b7280', marginTop: 2 }}>
               Modal Awal {rp(cfg.modal_awal)} + Pendapatan {rp(totalIncome)} − Pengeluaran {rp(totalExpense)}
             </div>
           </div>
           {cfg.modal_awal === 0 && (
-            <div style={{ background: '#fffbeb', borderRadius: 8, padding: '6px 10px', fontSize: 10, color: '#92400e', maxWidth: 120, textAlign: 'center' }}>
+            <div style={{ background: '#fefce8', borderRadius: 8, padding: '6px 10px', fontSize: 10, color: '#854d0e', maxWidth: 120, textAlign: 'center' }}>
               ⚠ Set modal awal di Pengaturan
             </div>
           )}
         </div>
         {cfg.modal_awal > 0 && (
           <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
-            {[['Modal Awal', cfg.modal_awal, '#15803d'], ['+ Pendapatan', totalIncome, '#0284c7'], ['− Pengeluaran', totalExpense, '#dc2626']].map(([l, v, c]) => (
+            {[['Modal Awal', cfg.modal_awal, '#1e3a5f'], ['+ Pendapatan', totalIncome, '#0ea5e9'], ['− Pengeluaran', totalExpense, '#dc2626']].map(([l, v, c]) => (
               <div key={l} style={{ flex: 1, background: '#fff', borderRadius: 6, padding: '5px 6px', textAlign: 'center' }}>
                 <div style={{ fontSize: 8, color: '#6b7280' }}>{l}</div>
                 <div style={{ fontSize: 10, fontWeight: 600, color: c }}>{rp(v)}</div>
@@ -1058,12 +1058,12 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
       <div style={{ ...S.card, marginTop: 8 }}>
         <div style={S.sec}>Populasi & stok pakan</div>
         <div style={S.g2}>
-          {[['Kandang A', cfg.pop_a, 500, cfg.pakan_a, '#15803d'], ['Kandang B', cfg.pop_b, 362, cfg.pakan_b, '#0284c7']].map(([l, p, cap, pk, c]) => (
+          {[['Kandang A', cfg.pop_a, 500, cfg.pakan_a, '#1e3a5f'], ['Kandang B', cfg.pop_b, 362, cfg.pakan_b, '#0ea5e9']].map(([l, p, cap, pk, c]) => (
             <div key={l}>
               <div style={{ fontSize: 10, color: '#6b7280' }}>{l}</div>
               <div style={{ fontSize: 19, fontWeight: 600, color: c }}>{p} <span style={{ fontSize: 10, fontWeight: 400 }}>ekor</span></div>
               <div style={S.bar}><div style={{ background: c, width: `${Math.round(p / cap * 100)}%`, height: '100%', borderRadius: 99 }} /></div>
-              <div style={{ marginTop: 5, background: pk < 50 ? '#fff1f2' : '#f0fdf4', borderRadius: 8, padding: '5px 8px' }}>
+              <div style={{ marginTop: 5, background: pk < 50 ? '#fff1f2' : '#eff6ff', borderRadius: 8, padding: '5px 8px' }}>
                 <div style={{ fontSize: 9, color: '#6b7280' }}>Stok Pakan</div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: pk < 50 ? '#dc2626' : c }}>{f1(pk)} kg{pk < 50 ? ' ⚠' : ''}</div>
               </div>
@@ -1076,7 +1076,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         <div style={S.sec}>HDP rata-rata — 7 panen terakhir</div>
         <div style={S.g2}>
           {[[hdpA, hcA, 'Kandang A'], [hdpB, hcB, 'Kandang B']].map(([hdp, hc, label]) => (
-            <div key={label} style={{ background: hdp >= 78 ? '#f0fdf4' : '#fff1f2', borderLeft: `3px solid ${hc}`, padding: '10px 12px' }}>
+            <div key={label} style={{ background: hdp >= 78 ? '#eff6ff' : '#fff1f2', borderLeft: `3px solid ${hc}`, padding: '10px 12px' }}>
               <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 3 }}>{label}</div>
               <div style={{ fontSize: 24, fontWeight: 600, color: hc }}>{hdp > 0 ? f1(hdp) : '—'}%</div>
               <div style={{ fontSize: 10, color: hc, marginTop: 2 }}>{hdp >= 78 ? 'Target tercapai' : hdp > 0 ? 'Di bawah target' : 'Belum ada data'}</div>
@@ -1108,29 +1108,29 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         <div style={S.card}>
           <div style={S.sec}>Piutang tempo belum lunas</div>
           {piutang.map(p => (
-            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '0.5px solid #f3f4f6' }}>
+            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '0.5px solid #f8fafc' }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 600 }}>{p.nama}</div>
-                <div style={{ fontSize: 10, color: '#d97706' }}>JT: {p.tempo} — {p.kg} kg</div>
+                <div style={{ fontSize: 10, color: '#f59e0b' }}>JT: {p.tempo} — {p.kg} kg</div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 600, color: '#d97706' }}>{rp(p.total)}</div>
-                <button onClick={() => lunasTempo(p.id)} style={{ background: '#15803d', color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 10, cursor: 'pointer', marginTop: 2 }}>Lunasi</button>
+                <div style={{ fontWeight: 600, color: '#f59e0b' }}>{rp(p.total)}</div>
+                <button onClick={() => lunasTempo(p.id)} style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 10, cursor: 'pointer', marginTop: 2 }}>Lunasi</button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      <div style={{ ...S.card, background: '#f0fdf4', border: '0.5px solid #bbf7d0' }}>
+      <div style={{ ...S.card, background: '#eff6ff', border: '0.5px solid #bfdbfe' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#15803d' }}>📋 Alokasi SHU & Laporan Lengkap</div>
-            <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>Laba bersih: <strong style={{ color: '#15803d' }}>{rp(laba)}</strong></div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#1e3a5f' }}>📋 Alokasi SHU & Laporan Lengkap</div>
+            <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>Laba bersih: <strong style={{ color: '#1e3a5f' }}>{rp(laba)}</strong></div>
           </div>
           {canDo('laporan') && (
             <button onClick={() => go('laporan')}
-              style={{ background: '#15803d', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+              style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
               Lihat →
             </button>
           )}
@@ -1159,7 +1159,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               {/* Grid lines */}
               {[0,25,50,75,100].map(v => (
                 <g key={v}>
-                  <line x1={pad} y1={H-(v/maxH)*(H-10)} x2={W-pad} y2={H-(v/maxH)*(H-10)} stroke="#e5e7eb" strokeWidth="0.5"/>
+                  <line x1={pad} y1={H-(v/maxH)*(H-10)} x2={W-pad} y2={H-(v/maxH)*(H-10)} stroke="#e2e8f0" strokeWidth="0.5"/>
                   <text x={pad-2} y={H-(v/maxH)*(H-10)+3} fontSize="6" fill="#9ca3af" textAnchor="end">{v}%</text>
                 </g>
               ))}
@@ -1168,24 +1168,24 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                 const x = pad + (i/(Math.max(arr.length-1,1)))*(W-pad*2)
                 const y = H - (h.hdp/maxH)*(H-10)
                 return `${x},${y}`
-              }).join(' ')} fill="none" stroke="#15803d" strokeWidth="1.5"/>}
+              }).join(' ')} fill="none" stroke="#1e3a5f" strokeWidth="1.5"/>}
               {/* Line kandang B */}
               {ptsB.length > 1 && <polyline points={ptsB.map((h,i,arr) => {
                 const x = pad + (i/(Math.max(arr.length-1,1)))*(W-pad*2)
                 const y = H - (h.hdp/maxH)*(H-10)
                 return `${x},${y}`
-              }).join(' ')} fill="none" stroke="#0284c7" strokeWidth="1.5"/>}
+              }).join(' ')} fill="none" stroke="#0ea5e9" strokeWidth="1.5"/>}
               {/* Dots A */}
               {ptsA.map((h,i,arr) => {
                 const x = pad + (i/(Math.max(arr.length-1,1)))*(W-pad*2)
                 const y = H - (h.hdp/maxH)*(H-10)
-                return <circle key={i} cx={x} cy={y} r="2.5" fill={h.hdp>=78?'#15803d':'#d97706'}/>
+                return <circle key={i} cx={x} cy={y} r="2.5" fill={h.hdp>=78?'#1e3a5f':'#f59e0b'}/>
               })}
               {/* Dots B */}
               {ptsB.map((h,i,arr) => {
                 const x = pad + (i/(Math.max(arr.length-1,1)))*(W-pad*2)
                 const y = H - (h.hdp/maxH)*(H-10)
-                return <circle key={i} cx={x} cy={y} r="2.5" fill={h.hdp>=78?'#0284c7':'#d97706'}/>
+                return <circle key={i} cx={x} cy={y} r="2.5" fill={h.hdp>=78?'#0ea5e9':'#f59e0b'}/>
               })}
             </svg>
             <div style={{display:'flex',gap:12,fontSize:9,color:'#6b7280'}}>
@@ -1211,7 +1211,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                 const hExp = (r.exp/maxVal)*(H-5)
                 return (
                   <g key={i}>
-                    <rect x={x} y={H-hInc} width={bw} height={hInc} fill="#15803d" opacity="0.8" rx="1"/>
+                    <rect x={x} y={H-hInc} width={bw} height={hInc} fill="#1e3a5f" opacity="0.8" rx="1"/>
                     <rect x={x+bw+1} y={H-hExp} width={bw} height={hExp} fill="#dc2626" opacity="0.8" rx="1"/>
                     <text x={x+bw} y={H+12} fontSize="6" fill="#9ca3af" textAnchor="middle">{BULAN[i].slice(0,3)}</text>
                   </g>
@@ -1219,7 +1219,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               })}
             </svg>
             <div style={{display:'flex',gap:12,fontSize:9,color:'#6b7280'}}>
-              <span style={{color:'#15803d'}}>■ Pendapatan</span>
+              <span style={{color:'#1e3a5f'}}>■ Pendapatan</span>
               <span style={{color:'#dc2626'}}>■ Pengeluaran</span>
             </div>
           </div>
@@ -1233,7 +1233,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         const last5avg = data.slice(-5).reduce((a,h)=>a+h.tb,0)/Math.min(5,data.length)
         const first5avg = data.slice(0,5).reduce((a,h)=>a+h.tb,0)/Math.min(5,data.length)
         const trend = last5avg > first5avg ? '↑ Naik' : last5avg < first5avg ? '↓ Turun' : '→ Stabil'
-        const trendColor = last5avg > first5avg ? '#15803d' : last5avg < first5avg ? '#dc2626' : '#d97706'
+        const trendColor = last5avg > first5avg ? '#1e3a5f' : last5avg < first5avg ? '#dc2626' : '#f59e0b'
         const W=320, H=60, pad=8, bw=(W-pad*2)/data.length-2
         return (
           <div style={S.card}>
@@ -1245,7 +1245,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               {data.map((h,i) => {
                 const x = pad + i*(bw+2)
                 const hBar = (h.tb/maxBtr)*(H-5)
-                const col = h.kd==='A'?'#15803d':'#0284c7'
+                const col = h.kd==='A'?'#1e3a5f':'#0ea5e9'
                 return (
                   <g key={i}>
                     <rect x={x} y={H-hBar} width={bw} height={hBar} fill={col} opacity="0.8" rx="1"/>
@@ -1301,23 +1301,23 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               <div style={{fontSize:18,fontWeight:700,color:'#dc2626'}}>{rp(hpp)}</div>
               <div style={{fontSize:9,color:'#9ca3af'}}>biaya ÷ produksi</div>
             </div>
-            <div style={{...S.stat,borderTop:'2px solid #15803d'}}>
+            <div style={{...S.stat,borderTop:'2px solid #1e3a5f'}}>
               <div style={{fontSize:10,color:'#6b7280'}}>Harga Jual rata-rata</div>
-              <div style={{fontSize:18,fontWeight:700,color:'#15803d'}}>{rp(hargaJual)}</div>
+              <div style={{fontSize:18,fontWeight:700,color:'#1e3a5f'}}>{rp(hargaJual)}</div>
               <div style={{fontSize:9,color:'#9ca3af'}}>per kg</div>
             </div>
-            <div style={{...S.stat,borderTop:`2px solid ${marginPerKg>=0?'#15803d':'#dc2626'}`}}>
+            <div style={{...S.stat,borderTop:`2px solid ${marginPerKg>=0?'#1e3a5f':'#dc2626'}`}}>
               <div style={{fontSize:10,color:'#6b7280'}}>Margin per kg</div>
-              <div style={{fontSize:18,fontWeight:700,color:marginPerKg>=0?'#15803d':'#dc2626'}}>{rp(marginPerKg)}</div>
+              <div style={{fontSize:18,fontWeight:700,color:marginPerKg>=0?'#1e3a5f':'#dc2626'}}>{rp(marginPerKg)}</div>
               <div style={{fontSize:9,color:'#9ca3af'}}>{marginPerKg>=0?'untung':'rugi'} per kg</div>
             </div>
-            <div style={{...S.stat,borderTop:'2px solid #0284c7'}}>
+            <div style={{...S.stat,borderTop:'2px solid #0ea5e9'}}>
               <div style={{fontSize:10,color:'#6b7280'}}>Total Produksi</div>
-              <div style={{fontSize:18,fontWeight:700,color:'#0284c7'}}>{f1(totalProdKg)} kg</div>
+              <div style={{fontSize:18,fontWeight:700,color:'#0ea5e9'}}>{f1(totalProdKg)} kg</div>
               <div style={{fontSize:9,color:'#9ca3af'}}>{totalProdBtr} butir</div>
             </div>
           </div>
-          <div style={{background:'#f9fafb',borderRadius:8,padding:'8px 10px',marginTop:8,fontSize:10}}>
+          <div style={{background:'#f8fafc',borderRadius:8,padding:'8px 10px',marginTop:8,fontSize:10}}>
             <div>Total Pengeluaran: <strong>{rp(totalExpense)}</strong></div>
             <div>Total Produksi: <strong>{f1(totalProdKg)} kg</strong></div>
             <div style={{marginTop:4,color:'#dc2626',fontWeight:600}}>HPP = {rp(totalExpense)} ÷ {f1(totalProdKg)} kg = <strong>{rp(hpp)}/kg</strong></div>
@@ -1333,9 +1333,9 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               <div style={{fontSize:18,fontWeight:700,color:'#7c3aed'}}>{f1(bepKg)} kg</div>
               <div style={{fontSize:9,color:'#9ca3af'}}>harus terjual</div>
             </div>
-            <div style={{...S.stat,borderTop:'2px solid #d97706'}}>
+            <div style={{...S.stat,borderTop:'2px solid #f59e0b'}}>
               <div style={{fontSize:10,color:'#6b7280'}}>BEP Nilai</div>
-              <div style={{fontSize:15,fontWeight:700,color:'#d97706'}}>{rp(bepRp)}</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#f59e0b'}}>{rp(bepRp)}</div>
               <div style={{fontSize:9,color:'#9ca3af'}}>pendapatan minimal</div>
             </div>
           </div>
@@ -1346,7 +1346,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             <div style={{marginTop:4,color:'#7c3aed',fontWeight:600}}>
               BEP = {rp(biayaTetap)} ÷ ({rp(hargaJual)} - {rp(bvPerKg)}) = <strong>{f1(bepKg)} kg</strong>
             </div>
-            <div style={{marginTop:4,color: totalProdKg>=bepKg?'#15803d':'#dc2626',fontWeight:600}}>
+            <div style={{marginTop:4,color: totalProdKg>=bepKg?'#1e3a5f':'#dc2626',fontWeight:600}}>
               Status: Produksi {f1(totalProdKg)} kg {totalProdKg>=bepKg?'≥':'<'} BEP {f1(bepKg)} kg → {totalProdKg>=bepKg?'✅ Di atas BEP':'⚠ Belum mencapai BEP'}
             </div>
           </div>
@@ -1356,14 +1356,14 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         <div style={S.card}>
           <div style={S.sec}>🌾 Efisiensi Biaya Pakan</div>
           <div style={S.g2}>
-            <div style={{...S.stat,borderTop:'2px solid #d97706'}}>
+            <div style={{...S.stat,borderTop:'2px solid #f59e0b'}}>
               <div style={{fontSize:10,color:'#6b7280'}}>Biaya Pakan</div>
-              <div style={{fontSize:15,fontWeight:700,color:'#d97706'}}>{rp(totalBiayaPakan)}</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#f59e0b'}}>{rp(totalBiayaPakan)}</div>
               <div style={{fontSize:9,color:'#9ca3af'}}>{f1(pctPakan)}% dari total biaya</div>
             </div>
-            <div style={{...S.stat,borderTop:`2px solid ${roiPakan>=1?'#15803d':'#dc2626'}`}}>
+            <div style={{...S.stat,borderTop:`2px solid ${roiPakan>=1?'#1e3a5f':'#dc2626'}`}}>
               <div style={{fontSize:10,color:'#6b7280'}}>ROI Pakan</div>
-              <div style={{fontSize:18,fontWeight:700,color:roiPakan>=1?'#15803d':'#dc2626'}}>{f1(roiPakan)}x</div>
+              <div style={{fontSize:18,fontWeight:700,color:roiPakan>=1?'#1e3a5f':'#dc2626'}}>{f1(roiPakan)}x</div>
               <div style={{fontSize:9,color:'#9ca3af'}}>pendapatan per Rp pakan</div>
             </div>
           </div>
@@ -1398,22 +1398,22 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               </div>
               <div style={S.stat}>
                 <div style={{fontSize:10,color:'#6b7280'}}>Realisasi</div>
-                <div style={{fontSize:16,fontWeight:700,color:pctTarget>=100?'#15803d':'#d97706'}}>{f1(realisasiKg)} kg</div>
+                <div style={{fontSize:16,fontWeight:700,color:pctTarget>=100?'#1e3a5f':'#f59e0b'}}>{f1(realisasiKg)} kg</div>
               </div>
             </div>
             <div style={{marginTop:8}}>
               <div style={{display:'flex',justifyContent:'space-between',fontSize:10,marginBottom:3}}>
                 <span>Pencapaian Target</span>
-                <span style={{fontWeight:700,color:pctTarget>=100?'#15803d':'#d97706'}}>{f1(pctTarget)}%</span>
+                <span style={{fontWeight:700,color:pctTarget>=100?'#1e3a5f':'#f59e0b'}}>{f1(pctTarget)}%</span>
               </div>
               <div style={{...S.bar,height:8}}>
-                <div style={{background:pctTarget>=100?'#15803d':'#d97706',width:`${Math.min(pctTarget,100)}%`,height:'100%',borderRadius:99}}/>
+                <div style={{background:pctTarget>=100?'#1e3a5f':'#f59e0b',width:`${Math.min(pctTarget,100)}%`,height:'100%',borderRadius:99}}/>
               </div>
               {cfg.target_hdp > 0 && (
                 <div style={{marginTop:8,fontSize:10,color:'#6b7280'}}>
                   Target HDP: <strong>{cfg.target_hdp}%</strong> |
-                  Realisasi HDP A: <strong style={{color:hdpA>=cfg.target_hdp?'#15803d':'#dc2626'}}>{f1(hdpA)}%</strong> |
-                  Realisasi HDP B: <strong style={{color:hdpB>=cfg.target_hdp?'#15803d':'#dc2626'}}>{f1(hdpB)}%</strong>
+                  Realisasi HDP A: <strong style={{color:hdpA>=cfg.target_hdp?'#1e3a5f':'#dc2626'}}>{f1(hdpA)}%</strong> |
+                  Realisasi HDP B: <strong style={{color:hdpB>=cfg.target_hdp?'#1e3a5f':'#dc2626'}}>{f1(hdpB)}%</strong>
                 </div>
               )}
             </div>
@@ -1425,14 +1425,14 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
   // ── HELPER RENDER GRID KAMAR ──
   const renderRoomGrid = (kdX) => {
-    const col = kdX === 'A' ? '#15803d' : '#0284c7'
+    const col = kdX === 'A' ? '#1e3a5f' : '#0ea5e9'
     const roomsKd = rooms[kdX]
     return (
       <div style={S.rg}>
         {roomsKd.map((v, i) => {
           const iD = v === 'mati', iF = v !== null
           return (
-            <div key={i} style={{ borderRadius:8, padding:'7px 6px', border:`1.5px solid ${iD?'#fca5a5':iF?'#86efac':'#e5e7eb'}`, background:iD?'#fff1f2':iF?'#f0fdf4':'#fff' }}>
+            <div key={i} style={{ borderRadius:8, padding:'7px 6px', border:`1.5px solid ${iD?'#fca5a5':iF?'#86efac':'#e2e8f0'}`, background:iD?'#fff1f2':iF?'#eff6ff':'#fff' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:3 }}>
                 <span style={{ fontSize:9, fontWeight:600, color:iD?'#dc2626':iF?col:'#9ca3af' }}>K-{i+1} {iD?'X':iF?'✓'+v:''}</span>
                 <button onClick={() => setRoom(kdX, i, 'mati')} style={{ background:'none', border:'none', fontSize:8, color:'#dc2626', cursor:'pointer' }}>Mati</button>
@@ -1440,10 +1440,10 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               <div style={{ display:'flex', gap:2 }}>
                 {[0,1,2].map(n => (
                   <button key={n} onClick={() => setRoom(kdX, i, n)}
-                    style={{ flex:1, border:`1.5px solid ${v===n?col:'#e5e7eb'}`, borderRadius:5, padding:'5px 0', fontWeight:600, fontSize:12, cursor:'pointer', background:v===n?col:'transparent', color:v===n?'#fff':'#111', fontFamily:'inherit' }}>{n}</button>
+                    style={{ flex:1, border:`1.5px solid ${v===n?col:'#e2e8f0'}`, borderRadius:5, padding:'5px 0', fontWeight:600, fontSize:12, cursor:'pointer', background:v===n?col:'transparent', color:v===n?'#fff':'#111', fontFamily:'inherit' }}>{n}</button>
                 ))}
                 <button onClick={() => setRoom(kdX, i, 3)}
-                  style={{ flex:1, border:`1.5px solid ${v===3?'#d97706':'#fde68a'}`, borderRadius:5, padding:'5px 0', fontWeight:700, fontSize:12, cursor:'pointer', background:v===3?'#d97706':'#fffbeb', color:v===3?'#fff':'#92400e', fontFamily:'inherit' }}>3</button>
+                  style={{ flex:1, border:`1.5px solid ${v===3?'#f59e0b':'#fef08a'}`, borderRadius:5, padding:'5px 0', fontWeight:700, fontSize:12, cursor:'pointer', background:v===3?'#f59e0b':'#fefce8', color:v===3?'#fff':'#854d0e', fontFamily:'inherit' }}>3</button>
               </div>
             </div>
           )
@@ -1454,8 +1454,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
   const renderInput = () => {
     const mkKandang = (kdX) => {
-      const col   = kdX === 'A' ? '#15803d' : '#0284c7'
-      const bg    = kdX === 'A' ? '#f0fdf4' : '#eff6ff'
+      const col   = kdX === 'A' ? '#1e3a5f' : '#0ea5e9'
+      const bg    = kdX === 'A' ? '#eff6ff' : '#eff6ff'
       const pop   = kdX === 'A' ? cfg.pop_a : cfg.pop_b
       const fd    = kdX === 'A' ? hdA : hdB
       const setFd = kdX === 'A' ? setHdA : setHdB
@@ -1471,7 +1471,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           <div style={{ ...S.stat, display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:7 }}>
             <div>
               <div style={{ fontSize:10, color:'#6b7280' }}>HDP Live — Kandang {kdX}</div>
-              <div style={{ fontSize:20, fontWeight:700, color:hdpKd>=78?col:'#d97706' }}>{f1(hdpKd)}%</div>
+              <div style={{ fontSize:20, fontWeight:700, color:hdpKd>=78?col:'#f59e0b' }}>{f1(hdpKd)}%</div>
             </div>
             <div style={{ textAlign:'right', fontSize:10, color:'#6b7280' }}>
               <div>{totBtrKd} butir | {filledKd}/{kdX==='A'?250:181} kamar</div>
@@ -1479,7 +1479,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             </div>
           </div>
           <div style={{ ...S.bar, height:5, marginBottom:8 }}>
-            <div style={{ background:hdpKd>=78?col:'#d97706', width:`${Math.min(hdpKd,100)}%`, height:'100%', borderRadius:99 }} />
+            <div style={{ background:hdpKd>=78?col:'#f59e0b', width:`${Math.min(hdpKd,100)}%`, height:'100%', borderRadius:99 }} />
           </div>
 
           {/* Grid kamar */}
@@ -1497,7 +1497,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             <label style={{ ...S.lbl, marginTop:0 }}>Total berat panen (kg) *</label>
             <input style={S.inp} type="number" placeholder="Total kg dipanen" value={fd.kg}
               onChange={e => setFd(p => ({ ...p, kg: e.target.value }))} />
-            <div style={{ fontSize:9, color:'#0284c7', marginTop:2, marginBottom:6 }}>
+            <div style={{ fontSize:9, color:'#0ea5e9', marginTop:2, marginBottom:6 }}>
               💡 Berat telur <strong>yang bagus saja</strong> (sudah dipisah dari yang rusak)
             </div>
             <div style={S.g2}>
@@ -1515,7 +1515,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             </div>
             <div style={{ background:bg, borderRadius:8, padding:'7px 10px', margin:'8px 0', fontSize:11 }}>
               <span style={{ fontWeight:600, color:col }}>{totBtrKd} butir dari {filledKd} kamar — HDP {f1(hdpKd)}%</span>
-              {(parseInt(fd.rusak)||0)>0 && <span style={{ color:'#d97706', marginLeft:8 }}>| Rusak: {fd.rusak} butir</span>}
+              {(parseInt(fd.rusak)||0)>0 && <span style={{ color:'#f59e0b', marginLeft:8 }}>| Rusak: {fd.rusak} butir</span>}
             </div>
             <button style={{ ...S.btnGrn, background:col }} onClick={() => simpanPanenKandang(kdX)}>
               💾 Simpan Panen Kandang {kdX}
@@ -1537,23 +1537,23 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
           {/* Status hari ini */}
           <div style={{ display:'flex', gap:6, marginBottom:10 }}>
-            <div style={{ flex:1, background: sudahPagi?'#f0fdf4':'#fff1f2', border:`1px solid ${sudahPagi?'#bbf7d0':'#fecaca'}`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
+            <div style={{ flex:1, background: sudahPagi?'#eff6ff':'#fff1f2', border:`1px solid ${sudahPagi?'#bfdbfe':'#fecaca'}`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
               <div style={{ fontSize:9, color:'#6b7280' }}>Pakan Pagi</div>
               {sudahPagi
-                ? <div style={{ fontSize:11, fontWeight:600, color:'#15803d' }}>✅ A:{f1(sudahPagi.kandang_a)}kg B:{f1(sudahPagi.kandang_b)}kg</div>
+                ? <div style={{ fontSize:11, fontWeight:600, color:'#1e3a5f' }}>✅ A:{f1(sudahPagi.kandang_a)}kg B:{f1(sudahPagi.kandang_b)}kg</div>
                 : <div style={{ fontSize:11, color:'#dc2626' }}>Belum diinput</div>}
             </div>
-            <div style={{ flex:1, background: sudahSore?'#f0fdf4':'#fff1f2', border:`1px solid ${sudahSore?'#bbf7d0':'#fecaca'}`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
+            <div style={{ flex:1, background: sudahSore?'#eff6ff':'#fff1f2', border:`1px solid ${sudahSore?'#bfdbfe':'#fecaca'}`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
               <div style={{ fontSize:9, color:'#6b7280' }}>Pakan Sore</div>
               {sudahSore
-                ? <div style={{ fontSize:11, fontWeight:600, color:'#15803d' }}>✅ A:{f1(sudahSore.kandang_a)}kg B:{f1(sudahSore.kandang_b)}kg</div>
+                ? <div style={{ fontSize:11, fontWeight:600, color:'#1e3a5f' }}>✅ A:{f1(sudahSore.kandang_a)}kg B:{f1(sudahSore.kandang_b)}kg</div>
                 : <div style={{ fontSize:11, color:'#dc2626' }}>Belum diinput</div>}
             </div>
           </div>
 
           {/* Form pagi */}
-          <div style={{ background:'#fffbeb', borderRadius:8, padding:'10px 12px', marginBottom:8, border:'1px solid #fde68a' }}>
-            <div style={{ fontSize:11, fontWeight:600, color:'#92400e', marginBottom:6 }}>🌅 Pakan Pagi</div>
+          <div style={{ background:'#fefce8', borderRadius:8, padding:'10px 12px', marginBottom:8, border:'1px solid #fef08a' }}>
+            <div style={{ fontSize:11, fontWeight:600, color:'#854d0e', marginBottom:6 }}>🌅 Pakan Pagi</div>
             <div style={S.g2}>
               <div>
                 <label style={{ ...S.lbl, marginTop:0 }}>Kandang A (kg)</label>
@@ -1566,7 +1566,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                   onChange={e => setHd(p => ({ ...p, pakanBPagi: e.target.value }))} />
               </div>
             </div>
-            <button style={{ ...S.btnGrn, background:'#d97706', marginTop:8 }}
+            <button style={{ ...S.btnGrn, background:'#f59e0b', marginTop:8 }}
               onClick={() => simpanPakanSesi('pagi')}>
               💾 Simpan Pakan Pagi
             </button>
@@ -1595,13 +1595,13 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
           {/* Info stok */}
           <div style={{ display:'flex', gap:6, fontSize:10 }}>
-            <div style={{ flex:1, background:'#f0fdf4', borderRadius:6, padding:'5px 8px' }}>
+            <div style={{ flex:1, background:'#eff6ff', borderRadius:6, padding:'5px 8px' }}>
               <div style={{ color:'#6b7280' }}>Stok Pakan A</div>
-              <div style={{ fontWeight:600, color:'#15803d' }}>{f1(cfg.pakan_a)} kg</div>
+              <div style={{ fontWeight:600, color:'#1e3a5f' }}>{f1(cfg.pakan_a)} kg</div>
             </div>
             <div style={{ flex:1, background:'#eff6ff', borderRadius:6, padding:'5px 8px' }}>
               <div style={{ color:'#6b7280' }}>Stok Pakan B</div>
-              <div style={{ fontWeight:600, color:'#0284c7' }}>{f1(cfg.pakan_b)} kg</div>
+              <div style={{ fontWeight:600, color:'#0ea5e9' }}>{f1(cfg.pakan_b)} kg</div>
             </div>
           </div>
           <div style={{ fontSize:10, color:'#6b7280', marginTop:6 }}>Pembelian pakan baru? Catat di menu Pengeluaran</div>
@@ -1612,8 +1612,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
     return (
       <>
         {/* Tab bar */}
-        <div style={{ display:'flex', background:'#f9fafb', borderRadius:10, padding:3, marginBottom:10, gap:3 }}>
-          {[['A','🐔 Kandang A','#15803d'],['B','🐔 Kandang B','#0284c7'],['pakan','🌾 Pakan','#d97706']].map(([k,v,c]) => (
+        <div style={{ display:'flex', background:'#f8fafc', borderRadius:10, padding:3, marginBottom:10, gap:3 }}>
+          {[['A','🐔 Kandang A','#1e3a5f'],['B','🐔 Kandang B','#0ea5e9'],['pakan','🌾 Pakan','#f59e0b']].map(([k,v,c]) => (
             <button key={k} onClick={() => setKd(k)}
               style={{ flex:1, padding:'8px 0', borderRadius:8, border:'none', fontSize:11, fontWeight:600, cursor:'pointer',
                 background: kd===k ? c : 'transparent',
@@ -1640,16 +1640,16 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
       <>
         <div style={S.card}>
           <div style={S.sec}>Kasir POS — penjualan telur</div>
-          <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '9px 11px', marginBottom: 10 }}>
+          <div style={{ background: '#eff6ff', borderRadius: 8, padding: '9px 11px', marginBottom: 10 }}>
             <div style={{ fontSize: 10, color: '#6b7280' }}>Stok gudang</div>
-            <div style={{ fontSize: 22, fontWeight: 600, color: '#15803d' }}>{f1(cfg.stok_kg)} kg</div>
+            <div style={{ fontSize: 22, fontWeight: 600, color: '#1e3a5f' }}>{f1(cfg.stok_kg)} kg</div>
           </div>
 
           <div style={S.sec}>Metode pembayaran</div>
           <div style={{ display: 'flex', gap: 5, marginBottom: 10 }}>
             {PAY_METHODS.map(p => (
               <button key={p.id} onClick={() => setTd(prev => ({ ...prev, metode: p.id }))}
-                style={{ flex: 1, border: `1.5px solid ${td.metode === p.id ? '#15803d' : '#e5e7eb'}`, borderRadius: 8, padding: '8px 4px', fontSize: 11, fontWeight: 600, cursor: 'pointer', background: td.metode === p.id ? '#f0fdf4' : '#fff', color: td.metode === p.id ? '#15803d' : '#374151', textAlign: 'center', fontFamily: 'inherit' }}>
+                style={{ flex: 1, border: `1.5px solid ${td.metode === p.id ? '#1e3a5f' : '#e2e8f0'}`, borderRadius: 8, padding: '8px 4px', fontSize: 11, fontWeight: 600, cursor: 'pointer', background: td.metode === p.id ? '#eff6ff' : '#fff', color: td.metode === p.id ? '#1e3a5f' : '#374151', textAlign: 'center', fontFamily: 'inherit' }}>
                 <div style={{ fontSize: 16, marginBottom: 2 }}>{p.ic}</div>
                 <span style={{ fontSize: 9 }}>{p.label}</span>
               </button>
@@ -1666,13 +1666,13 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             <>
               <label style={{ ...S.lbl, marginTop: 0 }}>Tanggal Jatuh Tempo *</label>
               <input style={{ ...S.inp, marginBottom: 8 }} type="date" value={td.tempo} onChange={e => setTd(p => ({ ...p, tempo: e.target.value }))} />
-              <div style={{ background: '#fffbeb', borderRadius: 8, padding: '7px 10px', fontSize: 10, color: '#92400e', marginBottom: 8 }}>⚠ Stok & pendapatan belum berubah hingga dilunasi</div>
+              <div style={{ background: '#fefce8', borderRadius: 8, padding: '7px 10px', fontSize: 10, color: '#854d0e', marginBottom: 8 }}>⚠ Stok & pendapatan belum berubah hingga dilunasi</div>
             </>
           )}
           {td.metode === 'qris' && (
-            <div style={{ background: '#f0fdf4', borderRadius: 8, padding: 10, textAlign: 'center', marginBottom: 8 }}>
+            <div style={{ background: '#eff6ff', borderRadius: 8, padding: 10, textAlign: 'center', marginBottom: 8 }}>
               <div style={{ fontSize: 28 }}>📱</div>
-              <div style={{ fontSize: 10, color: '#15803d', marginTop: 4 }}>QRIS — pembayaran langsung diproses</div>
+              <div style={{ fontSize: 10, color: '#1e3a5f', marginTop: 4 }}>QRIS — pembayaran langsung diproses</div>
             </div>
           )}
 
@@ -1709,7 +1709,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             <div><label style={{ ...S.lbl, marginTop: 0 }}>Jumlah (kg)</label><input style={S.inp} type="number" placeholder="0" value={td.kg || ''} onChange={e => setTd(p => ({ ...p, kg: e.target.value }))} /></div>
             <div><label style={{ ...S.lbl, marginTop: 0 }}>Harga/kg (Rp)</label><input style={S.inp} type="number" value={td.harga || ''} onChange={e => setTd(p => ({ ...p, harga: e.target.value }))} /></div>
           </div>
-          {prev > 0 && <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '8px 10px', marginTop: 7, display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 11, color: '#6b7280' }}>Total</span><span style={{ fontSize: 16, fontWeight: 600, color: '#15803d' }}>{rp(prev)}</span></div>}
+          {prev > 0 && <div style={{ background: '#eff6ff', borderRadius: 8, padding: '8px 10px', marginTop: 7, display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 11, color: '#6b7280' }}>Total</span><span style={{ fontSize: 16, fontWeight: 600, color: '#1e3a5f' }}>{rp(prev)}</span></div>}
           {warn && <div style={{ background: '#fff1f2', borderRadius: 8, padding: 8, marginTop: 6, fontSize: 11, color: '#dc2626', textAlign: 'center' }}>Stok Telur Tidak Mencukupi! ({f1(cfg.stok_kg)} kg)</div>}
           <button style={S.btnGrn} onClick={prosesJual}>🧾 Proses & cetak struk</button>
         </div>
@@ -1718,9 +1718,9 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           <div style={S.card}>
             <div style={S.sec}>Tagihan tempo belum lunas</div>
             {piutang.map(p => (
-              <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '0.5px solid #f3f4f6' }}>
-                <div><div style={{ fontSize: 11, fontWeight: 600 }}>{p.nama} — {p.kg} kg</div><div style={{ fontSize: 10, color: '#d97706' }}>JT: {p.tempo}</div></div>
-                <div style={{ textAlign: 'right' }}><div style={{ fontWeight: 600, color: '#d97706' }}>{rp(p.total)}</div><button onClick={() => lunasTempo(p.id)} style={{ background: '#15803d', color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 10, cursor: 'pointer', marginTop: 2 }}>Lunasi</button></div>
+              <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '0.5px solid #f8fafc' }}>
+                <div><div style={{ fontSize: 11, fontWeight: 600 }}>{p.nama} — {p.kg} kg</div><div style={{ fontSize: 10, color: '#f59e0b' }}>JT: {p.tempo}</div></div>
+                <div style={{ textAlign: 'right' }}><div style={{ fontWeight: 600, color: '#f59e0b' }}>{rp(p.total)}</div><button onClick={() => lunasTempo(p.id)} style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 10, cursor: 'pointer', marginTop: 2 }}>Lunasi</button></div>
               </div>
             ))}
           </div>
@@ -1732,21 +1732,21 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             {slog.slice(0, 5).map(t => {
               const pm = PAY_METHODS.find(p => p.id === t.metode)
               return (
-                <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '0.5px solid #f3f4f6' }}>
+                <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '0.5px solid #f8fafc' }}>
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600 }}>{t.no}</div>
                     <div style={{ fontSize: 10, color: '#6b7280' }}>{t.nama} · {t.kg} kg</div>
                     <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
-                      <span style={{ ...S.tag, background: t.lunas === false ? '#fffbeb' : '#f0fdf4', color: t.lunas === false ? '#92400e' : '#166534' }}>{t.lunas === false ? 'Tempo' : 'Lunas'}</span>
-                      {pm && <span style={{ ...S.tag, background: '#f9fafb', color: '#6b7280' }}>{pm.ic} {pm.label}</span>}
+                      <span style={{ ...S.tag, background: t.lunas === false ? '#fefce8' : '#eff6ff', color: t.lunas === false ? '#854d0e' : '#0369a1' }}>{t.lunas === false ? 'Tempo' : 'Lunas'}</span>
+                      {pm && <span style={{ ...S.tag, background: '#f8fafc', color: '#6b7280' }}>{pm.ic} {pm.label}</span>}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 600, fontSize: 12, color: '#15803d' }}>{rp(t.total)}</div>
+                    <div style={{ fontWeight: 600, fontSize: 12, color: '#1e3a5f' }}>{rp(t.total)}</div>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', marginTop: 3 }}>
-                      <button onClick={() => setReceipt(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0284c7', cursor: 'pointer' }}>Struk</button>
-                      <button onClick={() => printStruk(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#15803d', cursor: 'pointer' }}>🖨 Print</button>
-                      <button onClick={() => kirimWAStruk(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#16a34a', cursor: 'pointer' }}>💬 WA</button>
+                      <button onClick={() => setReceipt(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0ea5e9', cursor: 'pointer' }}>Struk</button>
+                      <button onClick={() => printStruk(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#1e3a5f', cursor: 'pointer' }}>🖨 Print</button>
+                      <button onClick={() => kirimWAStruk(t)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0369a1', cursor: 'pointer' }}>💬 WA</button>
                     </div>
                   </div>
                 </div>
@@ -1801,16 +1801,16 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                 </select>
               </div>
             </div>
-            <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '7px 10px', margin: '6px 0 8px', fontSize: 10, color: '#15803d' }}>✓ Stok pakan bertambah otomatis</div>
+            <div style={{ background: '#eff6ff', borderRadius: 8, padding: '7px 10px', margin: '6px 0 8px', fontSize: 10, color: '#1e3a5f' }}>✓ Stok pakan bertambah otomatis</div>
           </>
         )}
         <button style={S.btnGrn} onClick={simpanKeluar}>💾 Simpan pengeluaran</button>
       </div>
       <div style={S.card}>
         <div style={S.sec}>Riwayat pengeluaran</div>
-        <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginBottom: 8, background: '#f9fafb', padding: 3, borderRadius: 8 }}>
+        <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginBottom: 8, background: '#f8fafc', padding: 3, borderRadius: 8 }}>
           {[['all', 'Semua'], ...KATS.map(k => [k.id, k.label.split('/')[0]])].map(([k, v]) => (
-            <button key={k} onClick={() => setEf(k)} style={{ border: 'none', borderRadius: 6, padding: '5px 9px', fontSize: 10, fontWeight: 600, cursor: 'pointer', background: ef === k ? '#fff' : 'transparent', color: ef === k ? '#15803d' : '#6b7280', fontFamily: 'inherit' }}>{v}</button>
+            <button key={k} onClick={() => setEf(k)} style={{ border: 'none', borderRadius: 6, padding: '5px 9px', fontSize: 10, fontWeight: 600, cursor: 'pointer', background: ef === k ? '#fff' : 'transparent', color: ef === k ? '#1e3a5f' : '#6b7280', fontFamily: 'inherit' }}>{v}</button>
           ))}
         </div>
         {(ef === 'all' ? elog : elog.filter(e => e.kat === ef)).length === 0
@@ -1818,7 +1818,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           : (ef === 'all' ? elog : elog.filter(e => e.kat === ef)).slice(0, 10).map(e => {
             const ki = katOf(e.kat)
             return (
-              <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '0.5px solid #f3f4f6' }}>
+              <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '0.5px solid #f8fafc' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 28, height: 28, borderRadius: 7, background: ki.c + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>{ki.ic}</div>
                   <div>
@@ -1829,8 +1829,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 600, fontSize: 12, color: '#dc2626' }}>{rp(e.jml)}</div>
                   <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', marginTop: 2 }}>
-                    <button onClick={() => printKwitansi(e)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#15803d', cursor: 'pointer' }}>🖨 Print</button>
-                    <button onClick={() => kirimWAKwitansi(e)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#16a34a', cursor: 'pointer' }}>💬 WA</button>
+                    <button onClick={() => printKwitansi(e)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#1e3a5f', cursor: 'pointer' }}>🖨 Print</button>
+                    <button onClick={() => kirimWAKwitansi(e)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0369a1', cursor: 'pointer' }}>💬 WA</button>
                   </div>
                 </div>
               </div>
@@ -1853,11 +1853,11 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         {/* Tombol Print & Export */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <button onClick={printLaporan}
-            style={{ flex: 1, background: '#15803d', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            style={{ flex: 1, background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
             🖨 Print / PDF
           </button>
           <button onClick={exportCSV}
-            style={{ flex: 1, background: '#fff', color: '#15803d', border: '0.5px solid #15803d', borderRadius: 8, padding: '10px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            style={{ flex: 1, background: '#fff', color: '#1e3a5f', border: '0.5px solid #1e3a5f', borderRadius: 8, padding: '10px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
             📥 Export CSV
           </button>
         </div>
@@ -1865,28 +1865,28 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         <div style={{ ...S.card, padding: '10px 8px', overflowX: 'auto' }}>
           <div style={S.sec}>Ringkasan per bulan</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, minWidth: 480 }}>
-            <thead><tr>{['Bulan','Prod(kg)','Butir','Pendapatan','Pengeluaran','Laba','Pakan A','Pakan B','HDP A','HDP B','Mati'].map(h => <th key={h} style={{ background: '#15803d', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Bulan','Prod(kg)','Butir','Pendapatan','Pengeluaran','Laba','Pakan A','Pakan B','HDP A','HDP B','Mati'].map(h => <th key={h} style={{ background: '#1e3a5f', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>)}</tr></thead>
             <tbody>
               {rows.map((r, i) => {
                 const hA = r.hAn > 0 ? f1(r.hA / r.hAn) : '-', hB = r.hBn > 0 ? f1(r.hB / r.hBn) : '-', lb2 = r.inc - r.exp
                 return (
-                  <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                  <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#f8fafc' }}>
                     <td style={{ padding: '5px 6px', fontWeight: 600 }}>{BULAN[i].slice(0, 3)}</td>
                     <td style={{ padding: '5px 6px' }}>{f1(r.kg)}</td>
                     <td style={{ padding: '5px 6px' }}>{r.btr}</td>
-                    <td style={{ padding: '5px 6px', color: r.inc > 0 ? '#0284c7' : '#9ca3af' }}>{r.inc > 0 ? rp(r.inc) : '0'}</td>
+                    <td style={{ padding: '5px 6px', color: r.inc > 0 ? '#0ea5e9' : '#9ca3af' }}>{r.inc > 0 ? rp(r.inc) : '0'}</td>
                     <td style={{ padding: '5px 6px', color: r.exp > 0 ? '#dc2626' : '#9ca3af' }}>{r.exp > 0 ? rp(r.exp) : '0'}</td>
-                    <td style={{ padding: '5px 6px', color: lb2 > 0 ? '#15803d' : lb2 < 0 ? '#dc2626' : '#9ca3af', fontWeight: lb2 !== 0 ? 600 : 400 }}>{rp(lb2)}</td>
-                    <td style={{ padding: '5px 6px', color: r.pkA > 0 ? '#d97706' : '#9ca3af' }}>{f1(r.pkA)}</td>
-                    <td style={{ padding: '5px 6px', color: r.pkB > 0 ? '#d97706' : '#9ca3af' }}>{f1(r.pkB)}</td>
-                    <td style={{ padding: '5px 6px', color: parseFloat(hA) >= 78 ? '#15803d' : hA !== '-' ? '#dc2626' : '#9ca3af' }}>{hA}</td>
-                    <td style={{ padding: '5px 6px', color: parseFloat(hB) >= 78 ? '#15803d' : hB !== '-' ? '#dc2626' : '#9ca3af' }}>{hB}</td>
+                    <td style={{ padding: '5px 6px', color: lb2 > 0 ? '#1e3a5f' : lb2 < 0 ? '#dc2626' : '#9ca3af', fontWeight: lb2 !== 0 ? 600 : 400 }}>{rp(lb2)}</td>
+                    <td style={{ padding: '5px 6px', color: r.pkA > 0 ? '#f59e0b' : '#9ca3af' }}>{f1(r.pkA)}</td>
+                    <td style={{ padding: '5px 6px', color: r.pkB > 0 ? '#f59e0b' : '#9ca3af' }}>{f1(r.pkB)}</td>
+                    <td style={{ padding: '5px 6px', color: parseFloat(hA) >= 78 ? '#1e3a5f' : hA !== '-' ? '#dc2626' : '#9ca3af' }}>{hA}</td>
+                    <td style={{ padding: '5px 6px', color: parseFloat(hB) >= 78 ? '#1e3a5f' : hB !== '-' ? '#dc2626' : '#9ca3af' }}>{hB}</td>
                     <td style={{ padding: '5px 6px', color: r.mati > 0 ? '#dc2626' : '#9ca3af' }}>{r.mati}</td>
                   </tr>
                 )
               })}
-              <tr style={{ background: '#f3f4f6', borderTop: '2px solid #15803d' }}>
-                {[['TOTAL', '#111', 600], [f1(tot.kg), '#111', 600], [tot.btr, '#111', 600], [rp(tot.inc), '#0284c7', 600], [rp(tot.exp), '#dc2626', 600], [rp(tot.inc - tot.exp), tot.inc - tot.exp >= 0 ? '#15803d' : '#dc2626', 700], [f1(tot.pkA), '#d97706', 600], [f1(tot.pkB), '#d97706', 600], ['—','#9ca3af',400],['—','#9ca3af',400],[tot.mati,'#dc2626',600]].map(([v, c, fw], idx) => (
+              <tr style={{ background: '#f8fafc', borderTop: '2px solid #1e3a5f' }}>
+                {[['TOTAL', '#111', 600], [f1(tot.kg), '#111', 600], [tot.btr, '#111', 600], [rp(tot.inc), '#0ea5e9', 600], [rp(tot.exp), '#dc2626', 600], [rp(tot.inc - tot.exp), tot.inc - tot.exp >= 0 ? '#1e3a5f' : '#dc2626', 700], [f1(tot.pkA), '#f59e0b', 600], [f1(tot.pkB), '#f59e0b', 600], ['—','#9ca3af',400],['—','#9ca3af',400],[tot.mati,'#dc2626',600]].map(([v, c, fw], idx) => (
                   <td key={idx} style={{ padding: '5px 6px', color: c, fontWeight: fw }}>{v}</td>
                 ))}
               </tr>
@@ -1896,16 +1896,16 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         <div style={S.card}>
           <div style={S.sec}>Rincian pengeluaran per kategori</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-            <thead><tr>{['Kategori','Nominal (Rp)','% dari total'].map(h => <th key={h} style={{ background: '#15803d', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: 600 }}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Kategori','Nominal (Rp)','% dari total'].map(h => <th key={h} style={{ background: '#1e3a5f', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: 600 }}>{h}</th>)}</tr></thead>
             <tbody>
               {KATS.map((k, i) => (
-                <tr key={k.id} style={{ background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                <tr key={k.id} style={{ background: i % 2 === 0 ? '#fff' : '#f8fafc' }}>
                   <td style={{ padding: '5px 6px' }}>{k.ic} {k.label}</td>
                   <td style={{ padding: '5px 6px', color: k.c, fontWeight: 600 }}>{ecMap[k.id] ? rp(ecMap[k.id]) : '-'}</td>
                   <td style={{ padding: '5px 6px' }}>{totalExpense > 0 ? f1((ecMap[k.id] || 0) / totalExpense * 100) + '%' : '0%'}</td>
                 </tr>
               ))}
-              <tr style={{ background: '#f3f4f6', borderTop: '2px solid #15803d' }}>
+              <tr style={{ background: '#f8fafc', borderTop: '2px solid #1e3a5f' }}>
                 <td style={{ padding: '5px 6px', fontWeight: 600 }}>TOTAL</td>
                 <td style={{ padding: '5px 6px', fontWeight: 600 }}>{rp(totalExpense)}</td>
                 <td style={{ padding: '5px 6px', fontWeight: 600 }}>100%</td>
@@ -1918,13 +1918,13 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         <div style={S.card}>
           <div style={S.sec}>Alokasi SHU tahunan</div>
           <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 8 }}>
-            Dari laba bersih: <strong style={{ color: labaBersih >= 0 ? '#15803d' : '#dc2626' }}>{rp(labaBersih)}</strong>
+            Dari laba bersih: <strong style={{ color: labaBersih >= 0 ? '#1e3a5f' : '#dc2626' }}>{rp(labaBersih)}</strong>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-            <thead><tr>{['Item SHU','%','Nominal (Rp)'].map(h => <th key={h} style={{ background: '#15803d', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: 600 }}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Item SHU','%','Nominal (Rp)'].map(h => <th key={h} style={{ background: '#1e3a5f', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: 600 }}>{h}</th>)}</tr></thead>
             <tbody>
               {SHU.map((x, i) => (
-                <tr key={x.l} style={{ background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                <tr key={x.l} style={{ background: i % 2 === 0 ? '#fff' : '#f8fafc' }}>
                   <td style={{ padding: '5px 6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <div style={{ width: 8, height: 8, borderRadius: 2, background: x.c, flexShrink: 0 }} />
@@ -1935,14 +1935,14 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                   <td style={{ padding: '5px 6px', fontWeight: 600, color: x.c }}>{rp(labaBersih * x.p / 100)}</td>
                 </tr>
               ))}
-              <tr style={{ background: '#f3f4f6', borderTop: '2px solid #15803d' }}>
+              <tr style={{ background: '#f8fafc', borderTop: '2px solid #1e3a5f' }}>
                 <td style={{ padding: '5px 6px', fontWeight: 600 }}>TOTAL</td>
                 <td style={{ padding: '5px 6px', fontWeight: 600 }}>100%</td>
-                <td style={{ padding: '5px 6px', fontWeight: 600, color: '#15803d' }}>{rp(labaBersih)}</td>
+                <td style={{ padding: '5px 6px', fontWeight: 600, color: '#1e3a5f' }}>{rp(labaBersih)}</td>
               </tr>
             </tbody>
           </table>
-          <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '8px 10px', marginTop: 8, fontSize: 10, color: '#6b7280' }}>
+          <div style={{ background: '#eff6ff', borderRadius: 8, padding: '8px 10px', marginTop: 8, fontSize: 10, color: '#6b7280' }}>
             Distribusi SHU berdasarkan AD/ART BUMDes Widyatama
           </div>
         </div>
@@ -1980,9 +1980,9 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
     return (
       <>
-        <div style={{ display: 'flex', gap: 3, marginBottom: 8, background: '#f9fafb', padding: 3, borderRadius: 8 }}>
+        <div style={{ display: 'flex', gap: 3, marginBottom: 8, background: '#f8fafc', padding: 3, borderRadius: 8 }}>
           {[['all','Semua'],['panen','Panen'],['jual','Penjualan'],['keluar','Pengeluaran']].map(([k, v]) => (
-            <button key={k} onClick={() => setHf(k)} style={{ flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', fontWeight: 600, fontSize: 12, cursor: 'pointer', background: hf === k ? '#15803d' : 'transparent', color: hf === k ? '#fff' : '#6b7280', fontFamily: 'inherit' }}>{v}</button>
+            <button key={k} onClick={() => setHf(k)} style={{ flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', fontWeight: 600, fontSize: 12, cursor: 'pointer', background: hf === k ? '#1e3a5f' : 'transparent', color: hf === k ? '#fff' : '#6b7280', fontFamily: 'inherit' }}>{v}</button>
           ))}
         </div>
 
@@ -1993,37 +1993,37 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             <div style={{ ...S.card, overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <div style={S.sec}>📋 Tabel produksi harian</div>
-                <div style={{ display: 'flex', gap: 3, background: '#f9fafb', padding: 3, borderRadius: 6 }}>
+                <div style={{ display: 'flex', gap: 3, background: '#f8fafc', padding: 3, borderRadius: 6 }}>
                   {[['all','Semua'],['A','Kand A'],['B','Kand B']].map(([k,v]) => (
                     <button key={k} onClick={() => setTabelKd(k)}
-                      style={{ border: 'none', borderRadius: 5, padding: '4px 8px', fontSize: 9, fontWeight: 600, cursor: 'pointer', background: tabelKd===k?(k==='A'?'#15803d':k==='B'?'#0284c7':'#374151'):'transparent', color: tabelKd===k?'#fff':'#6b7280', fontFamily: 'inherit' }}>{v}</button>
+                      style={{ border: 'none', borderRadius: 5, padding: '4px 8px', fontSize: 9, fontWeight: 600, cursor: 'pointer', background: tabelKd===k?(k==='A'?'#1e3a5f':k==='B'?'#0ea5e9':'#374151'):'transparent', color: tabelKd===k?'#fff':'#6b7280', fontFamily: 'inherit' }}>{v}</button>
                   ))}
                 </div>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, minWidth: 420 }}>
                 <thead><tr>
                   {['Tanggal','Kand','Butir','Layak Jual','Kg','HDP%','Pakan(kg)','Rusak','Mati'].map(h => (
-                    <th key={h} style={{ background: '#15803d', color: '#fff', padding: '4px 5px', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ background: '#1e3a5f', color: '#fff', padding: '4px 5px', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr></thead>
                 <tbody>
                   {(tabelKd==='all'?hlog:hlog.filter(h=>h.kd===tabelKd)).map((h, i) => {
                     const layakJual = h.tb - (h.rusak||0)
                     return (
-                      <tr key={h.id} style={{ background: i%2===0?'#fff':'#f9fafb' }}>
+                      <tr key={h.id} style={{ background: i%2===0?'#fff':'#f8fafc' }}>
                         <td style={{ padding: '4px 5px', whiteSpace: 'nowrap' }}>{h.tgl}</td>
                         <td style={{ padding: '4px 5px' }}>
-                          <span style={{ background: h.kd==='A'?'#dcfce7':'#dbeafe', color: h.kd==='A'?'#166534':'#1e40af', borderRadius: 3, padding: '1px 5px', fontSize: 9, fontWeight: 600 }}>{h.kd}</span>
+                          <span style={{ background: h.kd==='A'?'#dbeafe':'#dbeafe', color: h.kd==='A'?'#0369a1':'#0369a1', borderRadius: 3, padding: '1px 5px', fontSize: 9, fontWeight: 600 }}>{h.kd}</span>
                         </td>
                         <td style={{ padding: '4px 5px', fontWeight: 600 }}>{h.tb}</td>
-                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#15803d' }}>
+                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#1e3a5f' }}>
                           {layakJual}
                           {(h.rusak||0) > 0 && <span style={{ fontSize: 8, color: '#9ca3af', marginLeft: 2 }}>(-{h.rusak})</span>}
                         </td>
                         <td style={{ padding: '4px 5px' }}>{f1(h.kg)}</td>
-                        <td style={{ padding: '4px 5px', color: h.hdp>=78?'#15803d':'#dc2626', fontWeight: 600 }}>{f1(h.hdp)}%</td>
-                        <td style={{ padding: '4px 5px', color: '#d97706' }}>{f1((h.pakanA||0)+(h.pakanB||0))}</td>
-                        <td style={{ padding: '4px 5px', color: (h.rusak||0)>0?'#d97706':'#9ca3af' }}>{h.rusak||0}</td>
+                        <td style={{ padding: '4px 5px', color: h.hdp>=78?'#1e3a5f':'#dc2626', fontWeight: 600 }}>{f1(h.hdp)}%</td>
+                        <td style={{ padding: '4px 5px', color: '#f59e0b' }}>{f1((h.pakanA||0)+(h.pakanB||0))}</td>
+                        <td style={{ padding: '4px 5px', color: (h.rusak||0)>0?'#f59e0b':'#9ca3af' }}>{h.rusak||0}</td>
                         <td style={{ padding: '4px 5px', color: (h.km||0)>0?'#dc2626':'#9ca3af' }}>{h.km||0}</td>
                       </tr>
                     )
@@ -2034,14 +2034,14 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                   {(() => {
                     const flog = tabelKd==='all'?hlog:hlog.filter(h=>h.kd===tabelKd)
                     return (
-                      <tr style={{ background: '#f3f4f6', borderTop: '2px solid #15803d' }}>
+                      <tr style={{ background: '#f8fafc', borderTop: '2px solid #1e3a5f' }}>
                         <td colSpan={2} style={{ padding: '4px 5px', fontWeight: 700, fontSize: 10 }}>TOTAL {tabelKd!=='all'?`Kand ${tabelKd}`:''}</td>
                         <td style={{ padding: '4px 5px', fontWeight: 700 }}>{flog.reduce((a,h)=>a+h.tb,0)}</td>
-                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#15803d' }}>{flog.reduce((a,h)=>a+(h.tb-(h.rusak||0)),0)}</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#1e3a5f' }}>{flog.reduce((a,h)=>a+(h.tb-(h.rusak||0)),0)}</td>
                         <td style={{ padding: '4px 5px', fontWeight: 700 }}>{f1(flog.reduce((a,h)=>a+h.kg,0))}</td>
-                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#15803d' }}>{flog.length>0?f1(flog.reduce((a,h)=>a+h.hdp,0)/flog.length):0}%</td>
-                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#d97706' }}>{f1(flog.reduce((a,h)=>a+(h.pakanA||0)+(h.pakanB||0),0))}</td>
-                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#d97706' }}>{flog.reduce((a,h)=>a+(h.rusak||0),0)}</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#1e3a5f' }}>{flog.length>0?f1(flog.reduce((a,h)=>a+h.hdp,0)/flog.length):0}%</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#f59e0b' }}>{f1(flog.reduce((a,h)=>a+(h.pakanA||0)+(h.pakanB||0),0))}</td>
+                        <td style={{ padding: '4px 5px', fontWeight: 700, color: '#f59e0b' }}>{flog.reduce((a,h)=>a+(h.rusak||0),0)}</td>
                         <td style={{ padding: '4px 5px', fontWeight: 700, color: '#dc2626' }}>{flog.reduce((a,h)=>a+(h.km||0),0)}</td>
                       </tr>
                     )
@@ -2061,7 +2061,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 80, overflowX: 'auto', paddingBottom: 4 }}>
                   {chartData.map((h, i) => {
                     const pct = h.tb / maxBtr
-                    const col = h.kd === 'A' ? '#15803d' : '#0284c7'
+                    const col = h.kd === 'A' ? '#1e3a5f' : '#0ea5e9'
                     return (
                       <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 18, flex: '0 0 auto' }}>
                         <div style={{ fontSize: 7, color: '#9ca3af', marginBottom: 1 }}>{h.tb}</div>
@@ -2074,8 +2074,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                   })}
                 </div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 16, fontSize: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, background: '#15803d', borderRadius: 2 }} /> Kandang A</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, background: '#0284c7', borderRadius: 2 }} /> Kandang B</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, background: '#1e3a5f', borderRadius: 2 }} /> Kandang A</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, background: '#0ea5e9', borderRadius: 2 }} /> Kandang B</div>
                 </div>
               </div>
             )}
@@ -2084,10 +2084,10 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             {hlog.some(h => Array.isArray(h.roomDetail)) && (
               <div style={S.card}>
                 <div style={S.sec}>🏠 Rekap produksi per kamar</div>
-                <div style={{ display: 'flex', gap: 3, marginBottom: 8, background: '#f9fafb', padding: 3, borderRadius: 8 }}>
+                <div style={{ display: 'flex', gap: 3, marginBottom: 8, background: '#f8fafc', padding: 3, borderRadius: 8 }}>
                   {['A', 'B'].map(k => (
                     <button key={k} onClick={() => setKd(k)}
-                      style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', fontWeight: 600, fontSize: 11, cursor: 'pointer', background: kd === k ? (k==='A'?'#15803d':'#0284c7') : 'transparent', color: kd === k ? '#fff' : '#6b7280', fontFamily: 'inherit' }}>
+                      style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', fontWeight: 600, fontSize: 11, cursor: 'pointer', background: kd === k ? (k==='A'?'#1e3a5f':'#0ea5e9') : 'transparent', color: kd === k ? '#fff' : '#6b7280', fontFamily: 'inherit' }}>
                       Kandang {k}
                     </button>
                   ))}
@@ -2095,7 +2095,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                 {(() => {
                   const recap = kd === 'A' ? kamRecapA : kamRecapB
                   const maxR = kd === 'A' ? maxRA : maxRB
-                  const col = kd === 'A' ? '#15803d' : '#0284c7'
+                  const col = kd === 'A' ? '#1e3a5f' : '#0ea5e9'
                   // Kamar problematis: sering 0 butir atau tidak terisi
                   const sorted0 = recap.map((r,i) => ({i, pct0: r.total>0?r[0]/r.total:0, tot: r.total})).filter(x=>x.tot>0).sort((a,b)=>b.pct0-a.pct0).slice(0,5)
                   const sorted2 = recap.map((r,i) => ({i, pct2: r.total>0?r[2]/r.total:0, tot: r.total})).filter(x=>x.tot>0).sort((a,b)=>b.pct2-a.pct2).slice(0,5)
@@ -2106,8 +2106,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                         {Array(maxR).fill(0).map((_,i) => {
                           const r = recap[i]
                           const best = r.total > 0 ? (r[2]>r[1]&&r[2]>r[0] ? 2 : r[1]>r[0] ? 1 : 0) : -1
-                          const bg = best===2?'#dcfce7':best===1?'#dbeafe':best===0?'#f9fafb':'#f3f4f6'
-                          const fc = best===2?'#166534':best===1?'#1d4ed8':best===0?'#6b7280':'#d1d5db'
+                          const bg = best===2?'#dbeafe':best===1?'#dbeafe':best===0?'#f8fafc':'#f8fafc'
+                          const fc = best===2?'#0369a1':best===1?'#1d4ed8':best===0?'#6b7280':'#d1d5db'
                           return (
                             <div key={i} style={{ background: bg, borderRadius: 3, padding: '2px 1px', textAlign: 'center', border: `1px solid ${fc}33` }} title={`K-${i+1}: 0=${r[0]} 1=${r[1]} 2=${r[2]} 3=${r[3]}`}>
                               <div style={{ fontSize: 7, color: '#9ca3af' }}>{i+1}</div>
@@ -2119,7 +2119,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
                       {/* Warna legend */}
                       <div style={{ display: 'flex', gap: 8, fontSize: 9, color: '#6b7280', marginBottom: 10, flexWrap: 'wrap' }}>
-                        {[['#dcfce7','#166534','Dominan 2 butir'],['#dbeafe','#1d4ed8','Dominan 1 butir'],['#f9fafb','#6b7280','Dominan 0 butir']].map(([bg,c,l]) => (
+                        {[['#dbeafe','#0369a1','Dominan 2 butir'],['#dbeafe','#1d4ed8','Dominan 1 butir'],['#f8fafc','#6b7280','Dominan 0 butir']].map(([bg,c,l]) => (
                           <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                             <div style={{ width: 10, height: 10, background: bg, border: `1px solid ${c}33`, borderRadius: 2 }} />{l}
                           </div>
@@ -2129,18 +2129,18 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                       {/* Top 5 kamar terbaik & perlu perhatian */}
                       <div style={S.g2}>
                         <div>
-                          <div style={{ fontSize: 10, fontWeight: 600, color: '#15803d', marginBottom: 5 }}>🏆 Top 5 terbaik (dominan 2 butir)</div>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: '#1e3a5f', marginBottom: 5 }}>🏆 Top 5 terbaik (dominan 2 butir)</div>
                           {sorted2.map(x => (
-                            <div key={x.i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, padding: '3px 0', borderBottom: '0.5px solid #f3f4f6' }}>
+                            <div key={x.i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, padding: '3px 0', borderBottom: '0.5px solid #f8fafc' }}>
                               <span>K-{x.i+1}</span>
-                              <span style={{ color: '#15803d', fontWeight: 600 }}>{Math.round(x.pct2*100)}% 2-butir</span>
+                              <span style={{ color: '#1e3a5f', fontWeight: 600 }}>{Math.round(x.pct2*100)}% 2-butir</span>
                             </div>
                           ))}
                         </div>
                         <div>
                           <div style={{ fontSize: 10, fontWeight: 600, color: '#dc2626', marginBottom: 5 }}>⚠ Perlu perhatian (sering 0)</div>
                           {sorted0.map(x => (
-                            <div key={x.i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, padding: '3px 0', borderBottom: '0.5px solid #f3f4f6' }}>
+                            <div key={x.i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, padding: '3px 0', borderBottom: '0.5px solid #f8fafc' }}>
                               <span>K-{x.i+1}</span>
                               <span style={{ color: '#dc2626', fontWeight: 600 }}>{Math.round(x.pct0*100)}% kosong</span>
                             </div>
@@ -2161,20 +2161,20 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               <div key={log.id} style={{ ...S.card, padding: '9px 12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <div>
-                    <span style={{ ...S.tag, background: '#dcfce7', color: '#166534' }}>Panen</span>
-                    <span style={{ ...S.tag, background: log.kd === 'A' ? '#dcfce7' : '#dbeafe', color: log.kd === 'A' ? '#166534' : '#1e40af', marginLeft: 4 }}>{log.kd}</span>
+                    <span style={{ ...S.tag, background: '#dbeafe', color: '#0369a1' }}>Panen</span>
+                    <span style={{ ...S.tag, background: log.kd === 'A' ? '#dbeafe' : '#dbeafe', color: log.kd === 'A' ? '#0369a1' : '#0369a1', marginLeft: 4 }}>{log.kd}</span>
                     <div style={{ fontSize: 11, marginTop: 3 }}>{log.tb} butir · {f1(log.kg)} kg</div>
-                    <div style={{ fontSize: 10, color: log.hdp >= 78 ? '#15803d' : '#dc2626' }}>HDP {f1(log.hdp)}%</div>
-                    {(log.pakanA || 0) > 0 || (log.pakanB || 0) > 0 ? <div style={{ fontSize: 10, color: '#d97706' }}>🌾 Pakan A:{f1(log.pakanA || 0)}kg B:{f1(log.pakanB || 0)}kg</div> : null}
+                    <div style={{ fontSize: 10, color: log.hdp >= 78 ? '#1e3a5f' : '#dc2626' }}>HDP {f1(log.hdp)}%</div>
+                    {(log.pakanA || 0) > 0 || (log.pakanB || 0) > 0 ? <div style={{ fontSize: 10, color: '#f59e0b' }}>🌾 Pakan A:{f1(log.pakanA || 0)}kg B:{f1(log.pakanB || 0)}kg</div> : null}
                     {log.km > 0 && <div style={{ fontSize: 10, color: '#dc2626' }}>Kematian: {log.km} ekor</div>}
-                    {(log.rusak || 0) > 0 && <div style={{ fontSize: 10, color: '#d97706' }}>Telur rusak: {log.rusak} butir</div>}
+                    {(log.rusak || 0) > 0 && <div style={{ fontSize: 10, color: '#f59e0b' }}>Telur rusak: {log.rusak} butir</div>}
                     <div style={{ fontSize: 10, color: '#9ca3af' }}>{log.by}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 4 }}>{log.tgl}</div>
                     {log.roomDetail && (
                       <button onClick={() => setRekapPopup(log)}
-                        style={{ background: '#f0fdf4', border: '0.5px solid #bbf7d0', borderRadius: 6, padding: '4px 8px', fontSize: 9, fontWeight: 600, color: '#15803d', cursor: 'pointer', display: 'block', marginBottom: 4 }}>
+                        style={{ background: '#eff6ff', border: '0.5px solid #bfdbfe', borderRadius: 6, padding: '4px 8px', fontSize: 9, fontWeight: 600, color: '#1e3a5f', cursor: 'pointer', display: 'block', marginBottom: 4 }}>
                         📊 Rekap Kamar
                       </button>
                     )}
@@ -2204,7 +2204,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                       ))
                       alert(`✅ Pakan diupdate!\nKandang ${log.kd}: ${f1(total)} kg\n(pagi ${f1(pkP)} + sore ${f1(pkS)})`)
                     }}
-                      style={{ background: '#fffbeb', border: '0.5px solid #fcd34d', borderRadius: 6, padding: '4px 8px', fontSize: 9, fontWeight: 600, color: '#92400e', cursor: 'pointer' }}>
+                      style={{ background: '#fefce8', border: '0.5px solid #fde047', borderRadius: 6, padding: '4px 8px', fontSize: 9, fontWeight: 600, color: '#854d0e', cursor: 'pointer' }}>
                       🌾 Update Pakan
                     </button>
                   </div>
@@ -2217,8 +2217,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                 <div key={log.id} style={{ ...S.card, padding: '9px 12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div>
-                      <span style={{ ...S.tag, background: '#dbeafe', color: '#1e40af' }}>Jual</span>
-                      {log.lunas === false && <span style={{ ...S.tag, background: '#fffbeb', color: '#92400e', marginLeft: 4 }}>Tempo</span>}
+                      <span style={{ ...S.tag, background: '#dbeafe', color: '#0369a1' }}>Jual</span>
+                      {log.lunas === false && <span style={{ ...S.tag, background: '#fefce8', color: '#854d0e', marginLeft: 4 }}>Tempo</span>}
                       <div style={{ fontSize: 11, fontWeight: 600, marginTop: 3 }}>{log.no}</div>
                       <div style={{ fontSize: 11 }}>{log.nama} · {log.kg} kg</div>
                       {pm && <div style={{ fontSize: 10, color: '#9ca3af' }}>{pm.ic} {pm.label}</div>}
@@ -2226,8 +2226,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: 10, color: '#9ca3af' }}>{log.tgl}</div>
-                      <div style={{ fontWeight: 600, color: '#15803d' }}>{rp(log.total)}</div>
-                      <button onClick={() => setReceipt(log)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0284c7', cursor: 'pointer' }}>Struk</button>
+                      <div style={{ fontWeight: 600, color: '#1e3a5f' }}>{rp(log.total)}</div>
+                      <button onClick={() => setReceipt(log)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#0ea5e9', cursor: 'pointer' }}>Struk</button>
                     </div>
                   </div>
                 </div>
@@ -2242,7 +2242,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                     <div>
                       <span style={{ ...S.tag, background: '#fff1f2', color: '#dc2626' }}>Keluar</span>
                       <div style={{ fontSize: 11, marginTop: 2 }}>{ki.label} · {log.ket}</div>
-                      {log.qty > 0 && <div style={{ fontSize: 10, color: '#15803d' }}>+{log.qty}kg pakan Kand.{log.kdPakan}</div>}
+                      {log.qty > 0 && <div style={{ fontSize: 10, color: '#1e3a5f' }}>+{log.qty}kg pakan Kand.{log.kdPakan}</div>}
                       <div style={{ fontSize: 10, color: '#9ca3af' }}>{log.tgl} · {log.by}</div>
                     </div>
                   </div>
@@ -2320,7 +2320,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           <label style={{ ...S.lbl, marginTop: 0 }}>💰 Modal Awal / Saldo Sebelum Pakai Aplikasi (Rp)</label>
           <input style={S.inp} type="number" placeholder="0" value={sv.modal_awal}
             onChange={e => setSv(p => ({ ...p, modal_awal: e.target.value }))} />
-          <div style={{ background: '#fffbeb', borderRadius: 7, padding: '7px 10px', fontSize: 10, color: '#92400e', margin: '5px 0 10px' }}>
+          <div style={{ background: '#fefce8', borderRadius: 7, padding: '7px 10px', fontSize: 10, color: '#854d0e', margin: '5px 0 10px' }}>
             💡 Isi dengan total uang BUMDes yang sudah ada <strong>sebelum</strong> aplikasi dipakai —
             termasuk pendapatan penjualan telur yang belum tercatat. Bukan pendapatan, murni modal awal.
           </div>
@@ -2329,7 +2329,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           <input style={S.inp} type="number" value={sv.kas}
             onChange={e => setSv(p => ({ ...p, kas: e.target.value }))} />
 
-          <div style={{ background: '#f0fdf4', borderRadius: 7, padding: '7px 10px', fontSize: 10, color: '#15803d', marginTop: 6 }}>
+          <div style={{ background: '#eff6ff', borderRadius: 7, padding: '7px 10px', fontSize: 10, color: '#1e3a5f', marginTop: 6 }}>
             <strong>Saldo kas aktual:</strong> {rp((+sv.modal_awal||0) + totalIncome - totalExpense)}<br/>
             <span style={{ color: '#6b7280' }}>= Modal Awal ({rp(+sv.modal_awal||0)}) + Pendapatan ({rp(totalIncome)}) − Pengeluaran ({rp(totalExpense)})</span>
           </div>
@@ -2344,9 +2344,9 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             Isi jika ada stok telur yang belum terjual sebelum aplikasi digunakan.
             Nilai ini akan otomatis <strong>bertambah</strong> setiap kali input panen disimpan.
           </div>
-          <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '7px 10px', marginTop: 8, fontSize: 11 }}>
-            <div style={{ fontWeight: 600, color: '#15803d' }}>Stok telur di dashboard saat ini:</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#15803d' }}>{f1(cfg.stok_kg)} kg</div>
+          <div style={{ background: '#eff6ff', borderRadius: 8, padding: '7px 10px', marginTop: 8, fontSize: 11 }}>
+            <div style={{ fontWeight: 600, color: '#1e3a5f' }}>Stok telur di dashboard saat ini:</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f' }}>{f1(cfg.stok_kg)} kg</div>
           </div>
         </div>
 
@@ -2364,9 +2364,9 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         <div style={S.card}>
           <div style={S.sec}>Manajemen pengguna</div>
           {users.map(u => (
-            <div key={u.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #f3f4f6' }}>
+            <div key={u.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #f8fafc' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: ROLES[u.role]?.bg || '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 12, color: ROLES[u.role]?.c || '#374151' }}>{u.avatar}</div>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: ROLES[u.role]?.bg || '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 12, color: ROLES[u.role]?.c || '#374151' }}>{u.avatar}</div>
                 <div><div style={{ fontSize: 12, fontWeight: 600 }}>{u.nama}</div><div style={{ fontSize: 10, color: '#9ca3af' }}>@{u.username}</div></div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -2411,7 +2411,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             <div style={{ marginTop: 10 }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Daftar tersimpan:</div>
               {pelanggan.map(p => (
-                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '0.5px solid #f3f4f6' }}>
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '0.5px solid #f8fafc' }}>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600 }}>{p.nama}</div>
                     <div style={{ fontSize: 10, color: '#6b7280' }}>{p.hp||'-'}{p.alamat ? ` · ${p.alamat}` : ''}</div>
@@ -2455,7 +2455,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             </div>
           </div>
 
-          <div style={{ height: 1, background: '#f3f4f6', margin: '10px 0' }} />
+          <div style={{ height: 1, background: '#f8fafc', margin: '10px 0' }} />
           <div style={{ fontSize: 10, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Pejabat Penandatangan</div>
 
           {[['Nama Direktur BUMDes','nama_direktur'],['Nama Bendahara BUMDes','nama_bendahara'],['Nama Kepala Desa','nama_kades']].map(([l, k]) => (
@@ -2500,7 +2500,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
     return (
       <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', zIndex:80, display:'flex', flexDirection:'column' }}>
         {/* Header */}
-        <div style={{ background:'#15803d', padding:'10px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
+        <div style={{ background:'#1e3a5f', padding:'10px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
           <div style={{ color:'#fff', fontWeight:600, fontSize:13 }}>🖨 {printPopup.title}</div>
           <button onClick={() => setPrintPopup(null)}
             style={{ background:'rgba(255,255,255,.2)', border:'none', borderRadius:6, padding:'4px 10px', color:'#fff', fontSize:12, cursor:'pointer' }}>✕ Tutup</button>
@@ -2516,18 +2516,18 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         </div>
 
         {/* Tombol aksi */}
-        <div style={{ background:'#fff', padding:'10px 14px', display:'flex', gap:8, borderTop:'0.5px solid #e5e7eb', flexShrink:0 }}>
+        <div style={{ background:'#fff', padding:'10px 14px', display:'flex', gap:8, borderTop:'0.5px solid #e2e8f0', flexShrink:0 }}>
           <button
             onClick={() => {
               const iframe = document.querySelector('iframe[title="Preview Struk"]')
               if (iframe) iframe.contentWindow.print()
               else alert('Tap tombol Share di browser → Print → pilih printer RPP02')
             }}
-            style={{ flex:1, background:'#15803d', color:'#fff', border:'none', borderRadius:8, padding:'12px 0', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+            style={{ flex:1, background:'#1e3a5f', color:'#fff', border:'none', borderRadius:8, padding:'12px 0', fontSize:13, fontWeight:600, cursor:'pointer' }}>
             🖨 Print Sekarang
           </button>
           <button onClick={() => setPrintPopup(null)}
-            style={{ flex:1, background:'#f9fafb', color:'#374151', border:'0.5px solid #e5e7eb', borderRadius:8, padding:'12px 0', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+            style={{ flex:1, background:'#f8fafc', color:'#374151', border:'0.5px solid #e2e8f0', borderRadius:8, padding:'12px 0', fontSize:13, fontWeight:600, cursor:'pointer' }}>
             Tutup
           </button>
         </div>
@@ -2570,28 +2570,28 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <div style={{ fontWeight: 600, fontSize: 13 }}>💬 Kirim via WhatsApp</div>
-            <button onClick={() => setWaPopup(null)} style={{ background: '#f3f4f6', border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+            <button onClick={() => setWaPopup(null)} style={{ background: '#f8fafc', border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', fontSize: 12 }}>✕</button>
           </div>
           <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 10 }}>{judul}</div>
 
           {/* Preview teks */}
-          <div style={{ background: '#f9fafb', borderRadius: 8, padding: 10, fontSize: 11, whiteSpace: 'pre-wrap', overflowY: 'auto', flex: 1, marginBottom: 12, border: '0.5px solid #e5e7eb', fontFamily: 'monospace', lineHeight: 1.5 }}>
+          <div style={{ background: '#f8fafc', borderRadius: 8, padding: 10, fontSize: 11, whiteSpace: 'pre-wrap', overflowY: 'auto', flex: 1, marginBottom: 12, border: '0.5px solid #e2e8f0', fontFamily: 'monospace', lineHeight: 1.5 }}>
             {teks}
           </div>
 
           {/* Instruksi iPhone */}
-          <div style={{ background: '#fffbeb', borderRadius: 8, padding: '8px 10px', fontSize: 10, color: '#92400e', marginBottom: 10 }}>
+          <div style={{ background: '#fefce8', borderRadius: 8, padding: '8px 10px', fontSize: 10, color: '#854d0e', marginBottom: 10 }}>
             <strong>Cara kirim di iPhone:</strong> Tap "Copy Teks" → buka WhatsApp → pilih chat pelanggan → tahan area pesan → Paste → kirim
           </div>
 
           {/* Tombol aksi */}
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={doCopy}
-              style={{ flex: 1, background: copied ? '#15803d' : '#f0fdf4', color: copied ? '#fff' : '#15803d', border: `1px solid ${copied?'#15803d':'#bbf7d0'}`, borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              style={{ flex: 1, background: copied ? '#1e3a5f' : '#eff6ff', color: copied ? '#fff' : '#1e3a5f', border: `1px solid ${copied?'#1e3a5f':'#bfdbfe'}`, borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               {copied ? '✓ Tersalin!' : '📋 Copy Teks'}
             </button>
             <button onClick={bukaWA}
-              style={{ flex: 1, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              style={{ flex: 1, background: '#0369a1', color: '#fff', border: 'none', borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               💬 Buka WA
             </button>
           </div>
@@ -2615,7 +2615,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
       else cnt[v] = (cnt[v] || 0) + 1
     })
 
-    const colMap = { 0: '#6b7280', 1: '#0284c7', 2: '#15803d', 3: '#d97706', mati: '#dc2626' }
+    const colMap = { 0: '#6b7280', 1: '#0ea5e9', 2: '#1e3a5f', 3: '#f59e0b', mati: '#dc2626' }
 
     return (
       <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 60, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '10px', overflowY: 'auto' }}>
@@ -2626,12 +2626,12 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               <div style={{ fontWeight: 600, fontSize: 13 }}>📊 Rekap Kamar — Kandang {log.kd}</div>
               <div style={{ fontSize: 10, color: '#6b7280' }}>{log.tgl} · {log.tb} butir · HDP {f1(log.hdp)}%</div>
             </div>
-            <button onClick={() => setRekapPopup(null)} style={{ background: '#f3f4f6', border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+            <button onClick={() => setRekapPopup(null)} style={{ background: '#f8fafc', border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', fontSize: 12 }}>✕</button>
           </div>
 
           {/* Ringkasan */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5, marginBottom: 10 }}>
-            {[['0 butir', cnt[0], '#f9fafb', '#6b7280'], ['1 butir', cnt[1], '#dbeafe', '#1d4ed8'], ['2 butir', cnt[2], '#dcfce7', '#166534'], ['3 butir', cnt[3], '#fef3c7', '#92400e'], ['Mati/Ksg', (cnt.mati + cnt.kosong), '#fff1f2', '#dc2626']].map(([l, v, bg, c]) => (
+            {[['0 butir', cnt[0], '#f8fafc', '#6b7280'], ['1 butir', cnt[1], '#dbeafe', '#1d4ed8'], ['2 butir', cnt[2], '#dbeafe', '#0369a1'], ['3 butir', cnt[3], '#fef3c7', '#854d0e'], ['Mati/Ksg', (cnt.mati + cnt.kosong), '#fff1f2', '#dc2626']].map(([l, v, bg, c]) => (
               <div key={l} style={{ background: bg, borderRadius: 7, padding: '6px 4px', textAlign: 'center' }}>
                 <div style={{ fontSize: 16, fontWeight: 700, color: c }}>{v}</div>
                 <div style={{ fontSize: 8, color: '#6b7280' }}>{l}</div>
@@ -2646,7 +2646,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               const v = rooms[i]
               const isMati = v === 'mati'
               const isNull = v === null || v === undefined
-              const bg = isMati ? '#fff1f2' : isNull ? '#f9fafb' : v === 0 ? '#f9fafb' : v === 1 ? '#dbeafe' : v === 2 ? '#dcfce7' : '#fef3c7'
+              const bg = isMati ? '#fff1f2' : isNull ? '#f8fafc' : v === 0 ? '#f8fafc' : v === 1 ? '#dbeafe' : v === 2 ? '#dbeafe' : '#fef3c7'
               const fc = isMati ? '#dc2626' : isNull ? '#d1d5db' : colMap[v] || '#374151'
               return (
                 <div key={i} style={{ background: bg, borderRadius: 5, padding: '4px 2px', textAlign: 'center', border: `1px solid ${fc}22` }}>
@@ -2659,7 +2659,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
           {/* Legend */}
           <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-            {[['—', '#d1d5db', 'Tidak diisi'], ['0', '#6b7280', '0 butir'], ['1', '#0284c7', '1 butir'], ['2', '#15803d', '2 butir'], ['3', '#d97706', '3 butir'], ['✕', '#dc2626', 'Mati']].map(([sym, c, l]) => (
+            {[['—', '#d1d5db', 'Tidak diisi'], ['0', '#6b7280', '0 butir'], ['1', '#0ea5e9', '1 butir'], ['2', '#1e3a5f', '2 butir'], ['3', '#f59e0b', '3 butir'], ['✕', '#dc2626', 'Mati']].map(([sym, c, l]) => (
               <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9, color: '#6b7280' }}>
                 <span style={{ fontWeight: 700, color: c }}>{sym}</span> {l}
               </div>
@@ -2677,8 +2677,8 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
     return (
       <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14 }}>
         <div style={{ background: '#fff', borderRadius: 14, padding: 18, width: '100%', maxWidth: 320, maxHeight: '85vh', overflowY: 'auto' }}>
-          <div style={{ textAlign: 'center', borderBottom: '1px dashed #e5e7eb', paddingBottom: 10, marginBottom: 10 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: '#15803d' }}>{cfg.nama_bumdes}</div>
+          <div style={{ textAlign: 'center', borderBottom: '1px dashed #e2e8f0', paddingBottom: 10, marginBottom: 10 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: '#1e3a5f' }}>{cfg.nama_bumdes}</div>
             <div style={{ fontSize: 10, color: '#6b7280' }}>{cfg.desa}, {cfg.kecamatan}, {cfg.kabupaten}</div>
             <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>Telur Ayam Petelur Segar</div>
           </div>
@@ -2690,12 +2690,12 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               </div>
             ))}
           </div>
-          <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '9px 11px', marginBottom: 10, fontSize: 12 }}>
+          <div style={{ background: '#eff6ff', borderRadius: 8, padding: '9px 11px', marginBottom: 10, fontSize: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}><span>Telur Ayam</span><span>{receipt.kg} kg x {rp(receipt.harga)}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 14, borderTop: '1px solid #bbf7d0', paddingTop: 5 }}><span>TOTAL</span><span style={{ color: '#15803d' }}>{rp(receipt.total)}</span></div>
-            {receipt.lunas === false && <div style={{ color: '#d97706', fontSize: 10, marginTop: 4 }}>Status: BELUM LUNAS — JT {receipt.tempo}</div>}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 14, borderTop: '1px solid #bfdbfe', paddingTop: 5 }}><span>TOTAL</span><span style={{ color: '#1e3a5f' }}>{rp(receipt.total)}</span></div>
+            {receipt.lunas === false && <div style={{ color: '#f59e0b', fontSize: 10, marginTop: 4 }}>Status: BELUM LUNAS — JT {receipt.tempo}</div>}
           </div>
-          <div style={{ borderTop: '1px dashed #e5e7eb', paddingTop: 10, marginBottom: 8 }}>
+          <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: 10, marginBottom: 8 }}>
             <div style={{ textAlign: 'center', fontSize: 10, color: '#6b7280', marginBottom: 13 }}>Tanda Tangan Kasir</div>
             <div style={{ height: 28, borderBottom: '1px solid #d1d5db', margin: '0 32px' }} />
             <div style={{ textAlign: 'center', fontSize: 10, color: '#9ca3af', marginTop: 3 }}>{receipt.by} — {cfg.nama_bumdes}</div>
@@ -2703,9 +2703,9 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
           <div style={{ textAlign: 'center', fontSize: 10, color: '#9ca3af', marginBottom: 10 }}>Terima kasih atas kepercayaan Anda!</div>
           <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
             <button onClick={() => printStruk(receipt)}
-              style={{ flex: 1, background: '#f0fdf4', color: '#15803d', border: '0.5px solid #bbf7d0', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>🖨 Print Termal</button>
+              style={{ flex: 1, background: '#eff6ff', color: '#1e3a5f', border: '0.5px solid #bfdbfe', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>🖨 Print Termal</button>
             <button onClick={() => kirimWAStruk(receipt)}
-              style={{ flex: 1, background: '#f0fdf4', color: '#16a34a', border: '0.5px solid #bbf7d0', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>💬 Kirim WA</button>
+              style={{ flex: 1, background: '#eff6ff', color: '#0369a1', border: '0.5px solid #bfdbfe', borderRadius: 8, padding: '9px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>💬 Kirim WA</button>
           </div>
           <button style={S.btnGrn} onClick={() => setReceipt(null)}>Tutup Struk</button>
         </div>
@@ -2725,11 +2725,11 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
       <div style={S.topbar}>
         <div>
           <div style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>{cfg.nama_bumdes}</div>
-          <div style={{ color: '#bbf7d0', fontSize: 9 }}>{user.nama} · <span style={{ background: 'rgba(255,255,255,.18)', padding: '1px 5px', borderRadius: 3 }}>{role.label}</span></div>
+          <div style={{ color: '#bfdbfe', fontSize: 9 }}>{user.nama} · <span style={{ background: 'rgba(255,255,255,.18)', padding: '1px 5px', borderRadius: 3 }}>{role.label}</span></div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ color: '#bbf7d0', fontSize: 9 }}>Saldo kas</div>
+            <div style={{ color: '#bfdbfe', fontSize: 9 }}>Saldo kas</div>
             <div style={{ color: '#fff', fontWeight: 600, fontSize: 12 }}>{rp(cfg.modal_awal + totalIncome - totalExpense)}</div>
           </div>
           <button onClick={doLogout} style={{ background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 6, padding: '4px 8px', color: '#fff', fontSize: 9, cursor: 'pointer' }}>Keluar</button>
