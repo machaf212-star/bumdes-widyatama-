@@ -56,7 +56,7 @@ const S = {
   bar:     { background: '#e2e8f0', borderRadius: 99, height: 4, marginTop: 4 },
   notif:   (err) => ({ position: 'fixed', top: 68, left: '50%', transform: 'translateX(-50%)', zIndex: 100, borderRadius: 10, padding: '10px 18px', fontSize: 12, fontWeight: 600, color: '#fff', background: err ? '#ef4444' : '#1e3a5f', whiteSpace: 'nowrap', maxWidth: '90%', boxShadow: '0 4px 12px rgba(0,0,0,.15)' }),
   loginWrap: { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#f1f5f9' },
-  pakanBox:  { background: '#fefce8', border: '1px solid #fde047', borderRadius: 10, padding: '12px 14px', marginBottom: 10 },
+  pakanBox:  { background: '#f0fdfa', border: '1px solid #99f6e4', borderRadius: 10, padding: '12px 14px', marginBottom: 10 },
   rg:        { display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, maxHeight: 320, overflowY: 'auto' },
 }
 
@@ -1448,7 +1448,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
   // ── HELPER RENDER GRID KAMAR ──
   const renderRoomGrid = (kdX) => {
-    const col = kdX === 'A' ? '#1e3a5f' : '#0ea5e9'
+    const col = kdX === 'A' ? '#1e3a5f' : '#2563eb'
     const roomsKd = rooms[kdX]
     return (
       <div style={S.rg}>
@@ -1477,7 +1477,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
   const renderInput = () => {
     const mkKandang = (kdX) => {
-      const col   = kdX === 'A' ? '#1e3a5f' : '#0ea5e9'
+      const col   = kdX === 'A' ? '#1e3a5f' : '#2563eb'
       const bg    = kdX === 'A' ? '#eff6ff' : '#eff6ff'
       const pop   = kdX === 'A' ? cfg.pop_a : cfg.pop_b
       const fd    = kdX === 'A' ? hdA : hdB
@@ -1560,16 +1560,16 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
           {/* Status hari ini */}
           <div style={{ display:'flex', gap:6, marginBottom:10 }}>
-            <div style={{ flex:1, background: sudahPagi?'#eff6ff':'#fff1f2', border:`1px solid ${sudahPagi?'#bfdbfe':'#fecaca'}`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
+            <div style={{ flex:1, background: sudahPagi?'#f0fdfa':'#fff1f2', border:`1px solid ${sudahPagi?'#99f6e4':'#fecaca'}`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
               <div style={{ fontSize:9, color:'#6b7280' }}>Pakan Pagi</div>
               {sudahPagi
-                ? <div style={{ fontSize:11, fontWeight:600, color:'#1e3a5f' }}>A:{f1(sudahPagi.kandang_a)}kg B:{f1(sudahPagi.kandang_b)}kg</div>
+                ? <div style={{ fontSize:11, fontWeight:600, color:'#0f766e' }}>A:{f1(sudahPagi.kandang_a)}kg B:{f1(sudahPagi.kandang_b)}kg</div>
                 : <div style={{ fontSize:11, color:'#dc2626' }}>Belum diinput</div>}
             </div>
-            <div style={{ flex:1, background: sudahSore?'#eff6ff':'#fff1f2', border:`1px solid ${sudahSore?'#bfdbfe':'#fecaca'}`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
+            <div style={{ flex:1, background: sudahSore?'#f0fdfa':'#fff1f2', border:`1px solid ${sudahSore?'#99f6e4':'#fecaca'}`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
               <div style={{ fontSize:9, color:'#6b7280' }}>Pakan Sore</div>
               {sudahSore
-                ? <div style={{ fontSize:11, fontWeight:600, color:'#1e3a5f' }}>A:{f1(sudahSore.kandang_a)}kg B:{f1(sudahSore.kandang_b)}kg</div>
+                ? <div style={{ fontSize:11, fontWeight:600, color:'#0f766e' }}>A:{f1(sudahSore.kandang_a)}kg B:{f1(sudahSore.kandang_b)}kg</div>
                 : <div style={{ fontSize:11, color:'#dc2626' }}>Belum diinput</div>}
             </div>
           </div>
@@ -1589,15 +1589,15 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                   onChange={e => setHd(p => ({ ...p, pakanBPagi: e.target.value }))} />
               </div>
             </div>
-            <button style={{ ...S.btnGrn, background:'#f59e0b', marginTop:8 }}
+            <button style={{ ...S.btnGrn, background:'#0f766e', marginTop:8 }}
               onClick={() => simpanPakanSesi('pagi')}>
               <i className="ti ti-device-floppy" style={{fontSize:14,marginRight:6}}/> Simpan Pakan Pagi
             </button>
           </div>
 
           {/* Form sore */}
-          <div style={{ background:'#fff7ed', borderRadius:8, padding:'10px 12px', marginBottom:8, border:'1px solid #fed7aa' }}>
-            <div style={{ fontSize:11, fontWeight:600, color:'#9a3412', marginBottom:6 }}><i className="ti ti-moon" style={{fontSize:13,marginRight:4}}/> Pakan Sore</div>
+          <div style={{ background:'#f0f9ff', borderRadius:8, padding:'10px 12px', marginBottom:8, border:'1px solid #bae6fd' }}>
+            <div style={{ fontSize:11, fontWeight:600, color:'#0369a1', marginBottom:6 }}><i className="ti ti-moon" style={{fontSize:13,marginRight:4}}/> Pakan Sore</div>
             <div style={S.g2}>
               <div>
                 <label style={{ ...S.lbl, marginTop:0 }}>Kandang A (kg)</label>
@@ -1610,7 +1610,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
                   onChange={e => setHd(p => ({ ...p, pakanBSore: e.target.value }))} />
               </div>
             </div>
-            <button style={{ ...S.btnGrn, background:'#ea580c', marginTop:8 }}
+            <button style={{ ...S.btnGrn, background:'#1d4ed8', marginTop:8 }}
               onClick={() => simpanPakanSesi('sore')}>
               <i className="ti ti-device-floppy" style={{fontSize:14,marginRight:6}}/> Simpan Pakan Sore
             </button>
@@ -1618,11 +1618,11 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
 
           {/* Info stok */}
           <div style={{ display:'flex', gap:6, fontSize:10 }}>
-            <div style={{ flex:1, background:'#eff6ff', borderRadius:6, padding:'5px 8px' }}>
+            <div style={{ flex:1, background:'#f0fdfa', borderRadius:6, padding:'5px 8px' }}>
               <div style={{ color:'#6b7280' }}>Stok Pakan A</div>
               <div style={{ fontWeight:600, color:'#1e3a5f' }}>{f1(cfg.pakan_a)} kg</div>
             </div>
-            <div style={{ flex:1, background:'#eff6ff', borderRadius:6, padding:'5px 8px' }}>
+            <div style={{ flex:1, background:'#f0fdfa', borderRadius:6, padding:'5px 8px' }}>
               <div style={{ color:'#6b7280' }}>Stok Pakan B</div>
               <div style={{ fontWeight:600, color:'#0ea5e9' }}>{f1(cfg.pakan_b)} kg</div>
             </div>
@@ -1636,7 +1636,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
       <>
         {/* Tab bar */}
         <div style={{ display:'flex', background:'#f8fafc', borderRadius:10, padding:3, marginBottom:10, gap:3 }}>
-          {[['A','Kandang A','#1e3a5f'],['B','Kandang B','#0ea5e9'],['pakan','Pakan','#f59e0b']].map(([k,v,c]) => (
+          {[['A','Kandang A','#1e3a5f'],['B','Kandang B','#2563eb'],['pakan','Pakan','#0f766e']].map(([k,v,c]) => (
             <button key={k} onClick={() => setKd(k)}
               style={{ flex:1, padding:'8px 0', borderRadius:8, border:'none', fontSize:11, fontWeight:600, cursor:'pointer',
                 background: kd===k ? c : 'transparent',
@@ -2490,7 +2490,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         </div>
 
         <button style={{ ...S.btnGrn, opacity: saving ? 0.7 : 1 }} onClick={handleSimpan} disabled={saving}>
-          {saving ? '⏳ Menyimpan...' : '<i className="ti ti-device-floppy" style={{fontSize:14,marginRight:6}}/> Simpan semua pengaturan'}
+          {saving ? 'Menyimpan...' : <><i className="ti ti-device-floppy" style={{fontSize:14,marginRight:6}}/> Simpan semua pengaturan</>}
         </button>
       </>
     )
