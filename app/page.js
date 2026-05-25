@@ -974,7 +974,10 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
       h.kd === 'A' ? (rows[m].hA += h.hdp, rows[m].hAn++) : (rows[m].hB += h.hdp, rows[m].hBn++)
     })
     slog.filter(t => t.lunas !== false).forEach(t => { rows[new Date(t.tgl2 || tod()).getMonth()].inc += t.total })
-    elog.forEach(e => { rows[new Date(e.tgl).getMonth()].exp += e.jml })
+    elog.forEach(e => {
+      const m = new Date(e.tgl2 || e.tgl || tod()).getMonth()
+      if (m >= 0 && m <= 11) rows[m].exp += e.jml
+    })
     return rows
   }
 
