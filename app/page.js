@@ -826,7 +826,7 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
     if (!td.nama.trim()) { alert('Nama pelanggan wajib!'); return }
     if (td.metode === 'tempo' && !td.tempo) { alert('Tanggal jatuh tempo wajib!'); return }
     if (td.metode === 'transfer' && (!td.bank.trim() || !td.norek.trim())) { alert('Bank & no. rekening wajib!'); return }
-    if (td.metode !== 'tempo' && kgV > cfg.stok_kg) { alert('Stok Telur Tidak Mencukupi!'); return }
+    if (kgV > cfg.stok_kg) { alert('Stok Telur Tidak Mencukupi!'); return }
 
     const total = kgV * hV
     const no = 'TRX-' + String(txRef.current).padStart(4, '0')
@@ -841,18 +841,32 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
       }).select().single()
       if (error) throw error
 
+      // Stok telur SELALU berkurang — telur sudah dikirim baik tunai maupun tempo
+      const newStok = cfg.stok_kg - kgV
+      await saveCfg('stok_kg', newStok)
+      setCfg(prev => ({ ...prev, stok_kg: newStok }))
+
       if (lunas) {
-        const newStok = cfg.stok_kg - kgV
-        const newKas  = cfg.kas + total
-        const newIncome = totalIncome + total
-        await saveCfg('stok_kg', newStok)
+        // Tunai/transfer/QRIS → kas langsung bertambah
+        const newKas = cfg.kas + total
         await saveCfg('kas', newKas)
-        setCfg(prev => ({ ...prev, stok_kg: newStok, kas: newKas }))
+        setCfg(prev => ({ ...prev, kas: newKas }))
       }
+      // Tempo → kas belum bertambah, tunggu pelunasan
+
       txRef.current++
-      const tx = { id: data.id, no, tgl: new Date().toLocaleString('id-ID'), tgl2: tod(), kg: kgV, harga: hV, total, nama: td.nama, alamat: td.alamat, hp: td.hp, metode: td.metode, bank: td.bank, norek: td.norek, tempo: td.tempo, lunas, by: user.nama }
+      const tx = {
+        id: data.id, no, tgl: new Date().toLocaleString('id-ID'), tgl2: tod(),
+        kg: kgV, harga: hV, total, nama: td.nama, alamat: td.alamat, hp: td.hp,
+        metode: td.metode, bank: td.bank, norek: td.norek, tempo: td.tempo,
+        lunas, by: user.nama
+      }
       setSlog(prev => [tx, ...prev])
-      if (!lunas) setPiutang(prev => [{ id: data.id, no, tgl: tx.tgl, kg: kgV, total, nama: td.nama, tempo: td.tempo }, ...prev])
+      if (!lunas) setPiutang(prev => [{
+        id: data.id, no, tgl: tx.tgl, tgl2: tod(),
+        kg: kgV, total, nama: td.nama, hp: td.hp,
+        tempo: td.tempo, by: user.nama
+      }, ...prev])
       setReceipt(tx)
       setTd({ kg: '', harga: '25000', nama: '', alamat: '', hp: '', metode: td.metode, bank: '', norek: '', tempo: '' })
     } catch (err) {
@@ -861,18 +875,23 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
   }
 
   // ── LUNASI TEMPO ──
-  async function lunasTempo(id) {
-    const tx = piutang.find(p => p.id === id); if (!tx) return
+  async function lunasTempo(id, namaPelunasan) {
+    const tx = slog.find(p => p.id === id) || piutang.find(p => p.id === id)
+    if (!tx) return
     try {
-      await supabase.from('penjualan').update({ lunas: true }).eq('id', id)
-      const newStok = cfg.stok_kg - tx.kg
-      const newKas  = cfg.kas + tx.total
-      await saveCfg('stok_kg', newStok)
+      await supabase.from('penjualan').update({
+        lunas: true,
+        dilunasi_oleh: namaPelunasan,
+        tanggal_lunas: tod(),
+      }).eq('id', id)
+
+      // Kas bertambah saat lunas
+      const newKas = cfg.kas + tx.total
       await saveCfg('kas', newKas)
-      setCfg(prev => ({ ...prev, stok_kg: newStok, kas: newKas }))
+      setCfg(prev => ({ ...prev, kas: newKas }))
       setPiutang(prev => prev.filter(p => p.id !== id))
-      setSlog(prev => prev.map(t => t.id === id ? { ...t, lunas: true } : t))
-      notify(`Piutang ${tx.nama} dilunasi: ${rp(tx.total)}`)
+      setSlog(prev => prev.map(t => t.id === id ? { ...t, lunas: true, dilunasiOleh: namaPelunasan } : t))
+      notify(`Piutang ${tx.nama} dilunasi oleh ${namaPelunasan}: ${rp(tx.total)}`)
     } catch (err) {
       alert('Gagal lunasi: ' + err.message)
     }
@@ -1164,7 +1183,12 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontWeight: 600, color: '#f59e0b' }}>{rp(p.total)}</div>
-                <button onClick={() => lunasTempo(p.id)} style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 10, cursor: 'pointer', marginTop: 2 }}>Lunasi</button>
+                <button onClick={() => {
+                  const nama = prompt(`Siapa yang melunasi piutang ${p.nama}?\n(${rp(p.total)})`, user.nama)
+                  if (nama && nama.trim()) lunasTempo(p.id, nama.trim())
+                }} style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 10, cursor: 'pointer', marginTop: 2 }}>
+                  <i className="ti ti-check" style={{fontSize:10,marginRight:3}}/>Lunasi
+                </button>
               </div>
             </div>
           ))}
@@ -1769,7 +1793,15 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
             {piutang.map(p => (
               <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '0.5px solid #f8fafc' }}>
                 <div><div style={{ fontSize: 11, fontWeight: 600 }}>{p.nama} — {p.kg} kg</div><div style={{ fontSize: 10, color: '#f59e0b' }}>JT: {p.tempo}</div></div>
-                <div style={{ textAlign: 'right' }}><div style={{ fontWeight: 600, color: '#f59e0b' }}>{rp(p.total)}</div><button onClick={() => lunasTempo(p.id)} style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 10, cursor: 'pointer', marginTop: 2 }}>Lunasi</button></div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 600, color: '#f59e0b' }}>{rp(p.total)}</div>
+                  <button onClick={() => {
+                    const nama = prompt(`Siapa yang melunasi piutang ${p.nama}?\n(${rp(p.total)})`, user.nama)
+                    if (nama && nama.trim()) lunasTempo(p.id, nama.trim())
+                  }} style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 10, cursor: 'pointer', marginTop: 2 }}>
+                    <i className="ti ti-check" style={{fontSize:10,marginRight:3}}/>Lunasi
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -2030,10 +2062,91 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
     return (
       <>
         <div style={{ display: 'flex', gap: 3, marginBottom: 8, background: '#f8fafc', padding: 3, borderRadius: 8 }}>
-          {[['all','Semua'],['panen','Panen'],['jual','Penjualan'],['keluar','Pengeluaran']].map(([k, v]) => (
-            <button key={k} onClick={() => setHf(k)} style={{ flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', fontWeight: 600, fontSize: 12, cursor: 'pointer', background: hf === k ? '#1e3a5f' : 'transparent', color: hf === k ? '#fff' : '#6b7280', fontFamily: 'inherit' }}>{v}</button>
+          {[['all','Semua'],['panen','Panen'],['jual','Penjualan'],['keluar','Pengeluaran'],['piutang','Piutang']].map(([k, v]) => (
+            <button key={k} onClick={() => setHf(k)}
+              style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: 'none', fontWeight: 600, fontSize: 11, cursor: 'pointer',
+                background: hf === k ? (k==='piutang'?'#dc2626':'#1e3a5f') : 'transparent',
+                color: hf === k ? '#fff' : '#6b7280', fontFamily: 'inherit', position: 'relative' }}>
+              {v}
+              {k === 'piutang' && piutang.length > 0 && (
+                <span style={{ position: 'absolute', top: 2, right: 2, background: '#dc2626', color: '#fff', borderRadius: 99, fontSize: 8, padding: '0 4px', fontWeight: 700 }}>{piutang.length}</span>
+              )}
+            </button>
           ))}
         </div>
+
+        {/* ── PIUTANG TAB ── */}
+        {hf === 'piutang' && (
+          <>
+            {piutang.length === 0 ? (
+              <div style={{ ...S.card, textAlign: 'center', color: '#94a3b8', padding: 24 }}>
+                <i className="ti ti-check" style={{fontSize:32,display:'block',marginBottom:8,color:'#10b981'}}/>
+                Tidak ada piutang belum lunas
+              </div>
+            ) : (
+              <>
+                {/* Summary */}
+                <div style={{ ...S.card, background: '#fef2f2', border: '1px solid #fecaca', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>Total Piutang Belum Lunas</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#dc2626' }}>{rp(piutang.reduce((a,p)=>a+p.total,0))}</div>
+                    </div>
+                    <div style={{ textAlign: 'right', fontSize: 10, color: '#6b7280' }}>
+                      <div>{piutang.length} transaksi</div>
+                      <div>{f1(piutang.reduce((a,p)=>a+p.kg,0))} kg</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Daftar piutang */}
+                {piutang.map(p => {
+                  const jatuhTempo = new Date(p.tempo)
+                  const hari = Math.ceil((jatuhTempo - new Date()) / (1000*60*60*24))
+                  const telat = hari < 0
+                  const mepet = hari >= 0 && hari <= 3
+                  return (
+                    <div key={p.id} style={{ ...S.card, border: `1px solid ${telat?'#fecaca':mepet?'#fde68a':'#e2e8f0'}`, marginBottom: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>{p.nama}</div>
+                          <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>{p.no} · {p.tgl}</div>
+                          <div style={{ fontSize: 11, marginTop: 3 }}>
+                            <span style={{ color: '#0f172a' }}>{f1(p.kg)} kg</span>
+                            <span style={{ color: '#94a3b8', margin: '0 4px' }}>·</span>
+                            <span style={{ color: '#1e3a5f', fontWeight: 600 }}>{rp(p.total)}</span>
+                          </div>
+                          <div style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 4, background: telat?'#fef2f2':mepet?'#fffbeb':'#f0f9ff', borderRadius: 5, padding: '2px 7px', fontSize: 10 }}>
+                            <i className={`ti ${telat?'ti-alert-circle':mepet?'ti-clock':'ti-calendar'}`} style={{fontSize:11,color:telat?'#dc2626':mepet?'#d97706':'#0284c7'}}/>
+                            <span style={{ color: telat?'#dc2626':mepet?'#d97706':'#0284c7', fontWeight: 600 }}>
+                              {telat ? `Telat ${Math.abs(hari)} hari` : hari === 0 ? 'Jatuh tempo hari ini!' : `${hari} hari lagi`}
+                            </span>
+                            <span style={{ color: '#94a3b8' }}>· {p.tempo}</span>
+                          </div>
+                          {p.hp && <div style={{ fontSize: 10, color: '#64748b', marginTop: 3 }}>HP: {p.hp}</div>}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 8 }}>
+                          <button onClick={() => {
+                            const nama = prompt(`Siapa yang melunasi piutang ${p.nama}?\n(${rp(p.total)})`, user.nama)
+                            if (nama && nama.trim()) lunasTempo(p.id, nama.trim())
+                          }} style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            <i className="ti ti-check" style={{fontSize:12,marginRight:4}}/>Lunas
+                          </button>
+                          {p.hp && <button onClick={() => {
+                            const teks = `*${cfg.nama_bumdes}*\n\nYth. ${p.nama},\n\nMengingatkan piutang telur:\nNo: ${p.no}\nJumlah: ${f1(p.kg)} kg = *${rp(p.total)}*\nJatuh tempo: ${p.tempo}\n\nMohon segera dilunasi.\nTerima kasih 🙏`
+                            setWaPopup({ teks, hp: p.hp.replace(/^0/,'62'), judul: 'Tagihan Piutang' })
+                          }} style={{ background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 7, padding: '5px 8px', fontSize: 10, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            <i className="ti ti-brand-whatsapp" style={{fontSize:12,marginRight:3}}/>Tagih
+                          </button>}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </>
+            )}
+          </>
+        )}
 
         {/* ── REKAP PRODUKSI — hanya tampil saat filter Panen ── */}
         {hf === 'panen' && hlog.length > 0 && (
