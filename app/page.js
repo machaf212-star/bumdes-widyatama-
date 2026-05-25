@@ -213,7 +213,9 @@ export default function App() {
       const { data: keluarData } = await supabase.from('pengeluaran').select('*').order('created_at', { ascending: false })
       if (keluarData) {
         setElog(keluarData.map(e => ({
-          id: e.id, no: e.no_exp, kat: e.kategori, tgl: e.tanggal,
+          id: e.id, no: e.no_exp, kat: e.kategori,
+          tgl: new Date(e.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }),
+          tgl2: e.tanggal,
           jml: e.jumlah, ket: e.keterangan, qty: e.qty_pakan,
           kdPakan: e.kandang_pakan, by: e.dicatat_oleh,
         })))
@@ -880,13 +882,27 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
   async function simpanKeluar() {
     const jmlV = parseFloat(ed.jml) || 0
     if (jmlV <= 0) { alert('Jumlah pengeluaran wajib!'); return }
+    if (!ed.tgl) { alert('Tanggal wajib diisi!'); return }
+
+    // Pastikan format tanggal ISO (YYYY-MM-DD)
+    const tglISO = ed.tgl.includes('/') 
+      ? ed.tgl.split('/').reverse().join('-') 
+      : ed.tgl
+
     const no = 'EXP-' + String(exRef.current).padStart(4, '0')
     try {
-      await supabase.from('pengeluaran').insert({
+      const { data: inserted, error } = await supabase.from('pengeluaran').insert({
         no_exp: no, kategori: ed.kat, jumlah: jmlV,
         keterangan: ed.ket || '-', qty_pakan: parseFloat(ed.qty) || 0,
-        kandang_pakan: ed.kdPakan, dicatat_oleh: user.nama, tanggal: ed.tgl,
-      })
+        kandang_pakan: ed.kdPakan, dicatat_oleh: user.nama, tanggal: tglISO,
+      }).select().single()
+
+      if (error) {
+        console.error('Insert error:', error)
+        alert('Gagal simpan: ' + error.message + '\nCode: ' + error.code)
+        return
+      }
+
       const newKas = cfg.kas - jmlV
       await saveCfg('kas', newKas)
       setCfg(prev => ({ ...prev, kas: newKas }))
@@ -901,11 +917,18 @@ ${SHU.map(x => `<tr><td>${x.l}</td><td class="c">${x.p}%</td><td class="r">${Mat
         }
       }
       exRef.current++
-      setElog(prev => [{ id: Date.now(), no, kat: ed.kat, tgl: ed.tgl, jml: jmlV, ket: ed.ket || '-', qty: parseFloat(ed.qty) || 0, kdPakan: ed.kdPakan, by: user.nama }, ...prev])
+      const tglDisplay = new Date(tglISO + 'T00:00:00').toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' })
+      setElog(prev => [{ 
+        id: inserted?.id || Date.now(), no, kat: ed.kat, 
+        tgl: tglDisplay, tgl2: tglISO,
+        jml: jmlV, ket: ed.ket || '-', 
+        qty: parseFloat(ed.qty) || 0, 
+        kdPakan: ed.kdPakan, by: user.nama 
+      }, ...prev])
       setEd({ kat: 'pakan', tgl: tod(), jml: '', ket: '', qty: '', kdPakan: 'A' })
-      alert(`Pengeluaran ${katOf(ed.kat).label} disimpan: ${rp(jmlV)}`)
+      alert(`✅ Pengeluaran ${katOf(ed.kat).label} disimpan!\n${rp(jmlV)} — ${tglDisplay}`)
     } catch (err) {
-      alert('Gagal simpan pengeluaran: ' + err.message)
+      alert('Error: ' + err.message)
     }
   }
 
